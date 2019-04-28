@@ -1,7 +1,7 @@
 ﻿#pragma once
 
-// 레벨에 따른 수치 적용
-/*
+
+/*	인덱스에 따른 스테이터스
 	0 : MoveRange
 	1 : AttackMin
 	2 : AttackMax
@@ -11,6 +11,7 @@
 	6 : nHp
 */
 
+// 레벨에 따른 능력치
 int LevelStatusTable[3][3][7] = {
 	{
 		{ 2, 1, 2, 1, 3, 5, 100 },
@@ -29,6 +30,7 @@ int LevelStatusTable[3][3][7] = {
 	}
 };
 
+// 업그레이드에 따른 캐릭터 이름
 char LevelCharacterNameTable[3][3][12] = {
 	{
 		{"약한기사"},
@@ -47,11 +49,12 @@ char LevelCharacterNameTable[3][3][12] = {
 	}
 };
 
+// 업그레이드에 따른 캐릭터 모양
 char LevelCharacterShapeTable[3][3][3] = {
 	{
 		{"■"},
 		{"▣"},
-		{"㉾"}
+		{"◈"}
 	},
 	{
 		{"§"},
@@ -64,3 +67,13 @@ char LevelCharacterShapeTable[3][3][3] = {
 		{"㉿"}
 	}
 };
+
+// 업그레이드 비용
+int LevelCharacterUpgradeCost[3][3] = {
+	{ 0, 80, 150 },
+	{ 0, 80, 150 },
+	{ 0, 80, 150 }
+};
+
+// 캐릭터 클래스 이름
+char CharacterClassName[3][12] = { "기사", "기병", "궁병" };
