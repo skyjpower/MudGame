@@ -3,8 +3,6 @@
 #define CASTLE_HEIGHT_MAX 30
 #define CASTLE_WIDTH_MAX 30
 
-const int MOVE = 0, ATMIN = 1, ATMAX = 2, RANGE = 3, ARMIN = 4, ARMAX = 5, HP = 6;
-
 // 병사
 typedef struct _tagSoldier
 {
@@ -48,6 +46,7 @@ typedef struct _tagList
 typedef struct _tagPlayer
 {
 	POINT	m_tPos; // 플레이어 위치
+	POINT	m_tWorldPos; // 월드 상 위치
 
 	int		m_nMoney; // 소지 금액
 	int		m_nColor; // 색상
@@ -109,6 +108,8 @@ typedef struct _tagAreaList
 // 적 성
 typedef struct _tagECastle
 {
+	POINT	m_tWorldPos;
+
 	PDLIST	m_tDoorPosList;
 	PALIST	m_tAreaPosList;
 

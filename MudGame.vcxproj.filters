@@ -16,34 +16,46 @@
     <Filter Include="소스 파일\MapFile">
       <UniqueIdentifier>{986425a1-62a9-40a1-bb09-b1c5e9a1d0b7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\01 Init">
+      <UniqueIdentifier>{bb12538d-45f0-4034-b060-7453839984cc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\02 Render">
+      <UniqueIdentifier>{e08cbf76-7846-4940-80bd-12308e0e343b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\03 Player">
+      <UniqueIdentifier>{1442a5ac-b19a-47e1-a64e-f8121b17f711}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\04 ETC">
+      <UniqueIdentifier>{891b7f9c-bdd6-448d-a501-1e0a3abe7772}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\05 Debug">
+      <UniqueIdentifier>{c85e574c-445f-4a14-b7cd-385d0aa484e1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="Struct.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Type.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="LevelTable.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Debugging.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>헤더 파일</Filter>
-    </ClInclude>
-    <ClInclude Include="Render.h">
+    <ClInclude Include="Global.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
     <ClInclude Include="Init.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>소스 파일\01 Init</Filter>
+    </ClInclude>
+    <ClInclude Include="Render.h">
+      <Filter>소스 파일\02 Render</Filter>
     </ClInclude>
     <ClInclude Include="Update.h">
-      <Filter>헤더 파일</Filter>
+      <Filter>소스 파일\03 Player</Filter>
+    </ClInclude>
+    <ClInclude Include="Struct.h">
+      <Filter>소스 파일\04 ETC</Filter>
+    </ClInclude>
+    <ClInclude Include="Type.h">
+      <Filter>소스 파일\04 ETC</Filter>
+    </ClInclude>
+    <ClInclude Include="Debugging.h">
+      <Filter>소스 파일\05 Debug</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -53,9 +65,27 @@
     <Text Include="NationWide.txt">
       <Filter>소스 파일\MapFile</Filter>
     </Text>
+    <Text Include="CastleStage2.txt">
+      <Filter>소스 파일\MapFile</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Global.c">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Init.c">
+      <Filter>소스 파일\01 Init</Filter>
+    </ClCompile>
+    <ClCompile Include="Render.c">
+      <Filter>소스 파일\02 Render</Filter>
+    </ClCompile>
+    <ClCompile Include="Update.c">
+      <Filter>소스 파일\03 Player</Filter>
+    </ClCompile>
+    <ClCompile Include="Debugging.c">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>

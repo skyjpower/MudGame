@@ -76,28 +76,9 @@ enum Color
 	WHITE
 };
 
-
-
 enum MAP_MODE
 {
 	MM_WORLDMAP,
 	MM_CASTLEMAP,
 	MM_BATTLEMAP
 };
-
-// fore, back color
-int aMapTileColor[2][7] = 
-{
-	{ BROWN, WHITE, BLUE, GREEN, LIGHTGREEN, RED, RED },
-	{ BROWN, BLACK, BLUE, LIGHTGRAY, LIGHTGREEN, LIGHTGRAY, LIGHTRED }
-};
-
-// fore, back color
-int aCastleTileColor[2][6] =
-{
-	{ BROWN, WHITE, BLUE, YELLOW, MAGENTA, RED },
-	{ BROWN, BROWN, BLUE, BLACK, BROWN, BROWN }
-};
-
-// 캐슬 스테이지 이름
-const char* FileName[3] = { "CastleStage1.txt", "CastleStage1.txt", "CastleStage1.txt" };
