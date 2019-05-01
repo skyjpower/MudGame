@@ -7,13 +7,20 @@ void TextColor(int foreground, int background);
 void MoveCursorTo(const int x, const int y);
 // 백버퍼에 그리기
 void DrawToBackBuffer(const int x, const int y, char image);
-// 월드맵 그리기
+// 월드맵 backbuffer 기록
 void DrawAll(PPLAYER pPlayer);
-// 적 성 그리기
-void RenderECastleMap(PPLAYER pPlayer, PECASTLE pECastle);
 // 월드맵 그리기
 void RenderWorldMap(PPLAYER pPlayer);
-// 상태창
-void StatusWindow();
-// 적 성 그리기
+// 적 성 backbuffer 기록
 void DrawECastle(PPLAYER pPlayer, PECASTLE pECastle);
+// 적 성 그리기
+void RenderECastleMap(PPLAYER pPlayer, PECASTLE pECastle);
+// 배틀 맵 backbuffer 기록
+void DrawBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
+// 배틀 맵 그리기
+void RenderBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
+// 상태 창 그리기
+void CreateStatusWindow();
+// 이벤트 창 메세지
+void EventWindowRenewal(const char* pEventString);
+// 선택한 사람의 

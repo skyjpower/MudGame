@@ -1,11 +1,14 @@
 ﻿#pragma once
-#include "Game.h"
 #define CASTLE_HEIGHT_MAX 30
 #define CASTLE_WIDTH_MAX 30
+#define BATTLE_HEGIHT_MAX 30
+#define BATTLE_WIDTH_MAX 30
 
 // 병사
 typedef struct _tagSoldier
 {
+	POINT	m_tPos;
+
 	int m_nMoveRange; // 움직임 가능
 
 	int m_nAttackMin;	// 공격력 최소
@@ -42,6 +45,11 @@ typedef struct _tagList
 
 }LIST, *PLIST;
 
+typedef struct _tagMouse
+{
+	int x, y; // 좌표
+}MOUSE, *PMOUSE;
+
 // 플레이어
 typedef struct _tagPlayer
 {
@@ -51,15 +59,36 @@ typedef struct _tagPlayer
 	int		m_nMoney; // 소지 금액
 	int		m_nColor; // 색상
 	int		m_nHaveShip; // 물을 통과할 수 있는 지 여부
+	int		m_nSoldierTurn[3]; // 병사 차례
+	int		m_nSelectSoldier; // 선택된 병사
+
+	MOUSE	m_tMouse;
+	int		m_nMouseOn;
 
 	char	m_cShape[3];
 
-	PSOLDIER pSoldiers[3]; // 병사들
+	PSOLDIER m_pSoldiers[3]; // 병사들
 	
 }PLAYER, *PPLAYER;
 
 
 
+// 배틀 맵
+typedef struct _tagBattleMap
+{
+	// 적군 시작 주소
+	POINT m_tEnemyStartPos[3];
+	// 아군 시작 주소
+	POINT m_tPlayerStartPos[3];
+	// 적군
+	PSOLDIER	m_pEnemy[3];
+
+	int		m_nCurTurn;
+
+	// 맵
+	char m_aBattleMap[BATTLE_HEGIHT_MAX][BATTLE_WIDTH_MAX];
+
+}BATTLEMAP, *PBATTLEMAP;
 
 
 /* 적 성 */

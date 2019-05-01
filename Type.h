@@ -37,9 +37,12 @@ enum MAP_BATTLE_TILE
 	MBT_WALL = '1',
 	MBT_WATER = '2',
 	MBT_MOUNTAIN = '3',
-	MBT_ESOLDIER_K = '4', // 기사
-	MBT_ESOLDIER_C = '5', // 기병
-	MBT_ESOLDIER_A = '6', // 궁병
+	MBT_ESOLDIER_K = '4', // 적 기사
+	MBT_ESOLDIER_C = '5', // 적 기병
+	MBT_ESOLDIER_A = '6', // 적 궁사
+	MBT_PSOLDIER_K = '7', // 플레이어 기사
+	MBT_PSOLDIER_C = '8', // 플레이어 기병 
+	MBT_PSOLDIER_A = '9', // 플레이어 궁사
 	MBT_END
 };
 

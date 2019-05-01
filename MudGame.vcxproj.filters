@@ -31,6 +31,12 @@
     <Filter Include="소스 파일\05 Debug">
       <UniqueIdentifier>{c85e574c-445f-4a14-b7cd-385d0aa484e1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="소스 파일\MapFile\01 Castle">
+      <UniqueIdentifier>{20f7d581-d9e7-4806-9bdc-f5afef938ddd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\MapFile\02 BattleMap">
+      <UniqueIdentifier>{60ab8b10-7c39-444c-8fe6-477bbef3f7d4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Game.h">
@@ -59,14 +65,23 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="CastleStage1.txt">
-      <Filter>소스 파일\MapFile</Filter>
-    </Text>
     <Text Include="NationWide.txt">
       <Filter>소스 파일\MapFile</Filter>
     </Text>
+    <Text Include="CastleStage1.txt">
+      <Filter>소스 파일\MapFile\01 Castle</Filter>
+    </Text>
     <Text Include="CastleStage2.txt">
-      <Filter>소스 파일\MapFile</Filter>
+      <Filter>소스 파일\MapFile\01 Castle</Filter>
+    </Text>
+    <Text Include="BattleMap1.txt">
+      <Filter>소스 파일\MapFile\02 BattleMap</Filter>
+    </Text>
+    <Text Include="BattleMap2.txt">
+      <Filter>소스 파일\MapFile\02 BattleMap</Filter>
+    </Text>
+    <Text Include="BattleMap3.txt">
+      <Filter>소스 파일\MapFile\02 BattleMap</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>
@@ -86,7 +101,7 @@
       <Filter>소스 파일\03 Player</Filter>
     </ClCompile>
     <ClCompile Include="Debugging.c">
-      <Filter>소스 파일</Filter>
+      <Filter>소스 파일\05 Debug</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

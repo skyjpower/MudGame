@@ -160,6 +160,9 @@
     <ClInclude Include="Update.h" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="BattleMap1.txt" />
+    <Text Include="BattleMap2.txt" />
+    <Text Include="BattleMap3.txt" />
     <Text Include="CastleStage2.txt" />
     <Text Include="NationWide.txt" />
     <Text Include="CastleStage1.txt" />
