@@ -6,7 +6,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps);
 // 플레이어 병사 생성
 int CreatePlayerSoldier(PPLAYER pPlayer);
 // 병사 생성
-PSOLDIER CreateSoldier(int nType, int nTeam, int nUpgrade);
+SOLDIER CreateSoldier(int nType, int nTeam, int nUpgrade);
 // 월드맵, 성 맵 불러오기
 int LoadWorldMap(PECASTLE* ppECastle);
 int LoadECastleMap(PECASTLE pECastle, const char* FileName);

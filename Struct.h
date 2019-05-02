@@ -34,6 +34,10 @@ typedef struct _tagSoldier
 	int		m_nColor;			// 색
 	int		m_nTeam;			// 플레이어 / 적군 / 동맹 판별
 
+	int		m_bMoveFlag;		// 움직였는 지 여부
+	int		m_bAttackFlag;		// 공격했는 지 여부
+	int		m_bTurn;			// 턴이 존재하는 지 여부
+
 }SOLDIER, *PSOLDIER;
 
 // 병사 리스트
@@ -59,15 +63,14 @@ typedef struct _tagPlayer
 	int		m_nMoney; // 소지 금액
 	int		m_nColor; // 색상
 	int		m_nHaveShip; // 물을 통과할 수 있는 지 여부
-	int		m_nSoldierTurn[3]; // 병사 차례
 	int		m_nSelectSoldier; // 선택된 병사
+	int		m_nBattleMapMode;
 
 	MOUSE	m_tMouse;
 	int		m_nMouseOn;
 
 	char	m_cShape[3];
-
-	PSOLDIER m_pSoldiers[3]; // 병사들
+	SOLDIER m_tSoldiers[3]; // 병사들
 	
 }PLAYER, *PPLAYER;
 
@@ -81,9 +84,12 @@ typedef struct _tagBattleMap
 	// 아군 시작 주소
 	POINT m_tPlayerStartPos[3];
 	// 적군
-	PSOLDIER	m_pEnemy[3];
+	SOLDIER	m_tEnemy[3];
 
 	int		m_nCurTurn;
+	int		m_nEnemyCount;
+	int		m_nRewardMin;
+	int		m_nRewardMax;
 
 	// 맵
 	char m_aBattleMap[BATTLE_HEGIHT_MAX][BATTLE_WIDTH_MAX];

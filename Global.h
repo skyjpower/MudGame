@@ -1,7 +1,6 @@
 #pragma once
 #include "Game.h"
 
-
 extern char aWorldMap[MAP_WIDTH_MAX][MAP_HEIGHT_MAX];
 extern int aBattleMapRange[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
 
@@ -10,8 +9,8 @@ extern char aBackBuffer[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
 extern char aClearBuffer[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
 
 extern char aEventWindow[EVENT_WINDOW_HEIGHT][EVENT_WINDOW_WIDTH];
-extern char aEventMessage[STATUS_STRING_MAXLENGTH];
-extern char aEventTmpMessage[STATUS_STRING_MAXLENGTH];
+extern char aEventMessage[EVENT_STRING_MAXLENGTH];
+extern char aEventTmpMessage[EVENT_STRING_MAXLENGTH];
 
 extern char aStatusWindow[STATUS_WINDOW_HEIGHT][STATUS_WINDOW_WIDTH];
 
@@ -44,3 +43,7 @@ extern char LevelCharacterNameTable[3][3][12];
 extern char LevelCharacterShapeTable[3][3][3];
 
 extern const int MOVE, ATMIN, ATMAX, RANGE, ARMIN, ARMAX, HP;
+
+extern float g_fDeltaTime;
+extern LARGE_INTEGER g_tSecond;
+extern LARGE_INTEGER g_tTime;

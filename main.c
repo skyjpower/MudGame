@@ -17,6 +17,8 @@ int main()
 	PECASTLE pECastles[TOTAL_ECASTLE_NUM];
 	// 배틀맵
 	PBATTLEMAP pBattleMaps[TOTAL_BATTLEMAP_NUM];
+	// 배틀맵 종료 플래스
+	int nBattleEnd = 0;
 
 	if (!Init(&tPlayer, pECastles, pBattleMaps))
 	{
@@ -30,6 +32,7 @@ int main()
 	// PLAY
 	while (!g_gameOver)
 	{
+		CalcDeltaTime();
 		// 일반
 		if (g_gameMode == MM_WORLDMAP)
 		{
@@ -49,21 +52,26 @@ int main()
 		{
 			DrawBattleMap(&tPlayer, pBattleMaps[g_battleMapIndex]);
 
-			// 사용자의 턴에만 실행
+			// 사용자의 턴
 			if (pBattleMaps[g_battleMapIndex]->m_nCurTurn == TT_PLAYER)
 				UpdateInBattleMap(&tPlayer, pBattleMaps[g_battleMapIndex]);
-			//else if (pBattleMaps[g_battleMapIndex]->m_nCurTurn == TT_ENEMY)
-				// 적 AI 실행;
+			// 적 턴인 경우 AI
+			else if (pBattleMaps[g_battleMapIndex]->m_nCurTurn == TT_ENEMY)
+				BattleMapEnemyAI(&tPlayer, pBattleMaps[g_battleMapIndex]);
+
 			RenderBattleMap(&tPlayer, pBattleMaps[g_battleMapIndex]);
 
 			// 배틀이 끝난 경우
-			if (CheckEndBattleGame(&tPlayer, pBattleMaps[g_battleMapIndex]))
+			if ((nBattleEnd = CheckEndBattleGame(&tPlayer, pBattleMaps[g_battleMapIndex])))
 			{
-
+				// 플레이어의 승리
+				if (nBattleEnd == TT_PLAYER)
+					ChangeBattleMapToWorld(&tPlayer, pBattleMaps[g_battleMapIndex], TT_PLAYER);
+				// 적군의 승리
+				else
+					ChangeBattleMapToWorld(&tPlayer, pBattleMaps[g_battleMapIndex], TT_ENEMY);
 			}
 		}
-		
-		Sleep(33);
 	}
 	
 	// 캐슬 free
@@ -94,10 +102,11 @@ int main()
 
 		free(pECastles[i]);
 	}
-	// 병사 free
-	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
+	
+	// 배틀맵 free
+	for (int i = 0; i < TOTAL_BATTLEMAP_NUM; ++i)
 	{
-		free(tPlayer.m_pSoldiers[i]);
+		free(pBattleMaps);
 	}
 
 	_CrtDumpMemoryLeaks();

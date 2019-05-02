@@ -11,8 +11,8 @@ char aClearBuffer[MAP_HEIGHT_MAX][MAP_WIDTH_MAX] = { 0 };
 
 // 이벤트 창
 char aEventWindow[EVENT_WINDOW_HEIGHT][EVENT_WINDOW_WIDTH] = { 0 };
-char aEventMessage[STATUS_STRING_MAXLENGTH] = { 0 };
-char aEventTmpMessage[STATUS_STRING_MAXLENGTH] = { 0 };
+char aEventMessage[EVENT_STRING_MAXLENGTH] = { 0 };
+char aEventTmpMessage[EVENT_STRING_MAXLENGTH] = { 0 };
 // 상태 창
 char aStatusWindow[STATUS_WINDOW_HEIGHT][STATUS_WINDOW_WIDTH] = { 0 };
 
@@ -45,19 +45,19 @@ int g_battleMapIndex = 0;
 // 레벨 테이블
 int LevelStatusTable[3][3][7] = {
 	{
-		{ 2, 1, 2, 1, 3, 5, 100 },
-		{ 2, 2, 3, 1, 5, 7, 120 },
-		{ 3, 3, 4, 1, 7, 10, 140 }
+		{ 2, 30, 40, 1, 10, 20, 100 },
+		{ 2, 40, 50, 1, 20, 35, 120 },
+		{ 3, 50, 60, 1, 30, 50, 140 }
 	},
 	{
-		{ 3, 2, 5, 1, 1, 2, 80 },
-		{ 4, 4, 7, 1, 2, 3, 100 },
-		{ 5, 6, 9, 2, 4, 6, 120 }
+		{ 3, 40, 70, 1, 5, 7, 80 },
+		{ 4, 50, 80, 1, 10, 13, 100 },
+		{ 5, 60, 90, 2, 15, 18, 120 }
 	},
 	{
-		{ 1, 2, 4, 2, 0, 1, 50 },
-		{ 1, 3, 5, 2, 1, 2, 60 },
-		{ 2, 4, 6, 3, 2, 3, 70 }
+		{ 1, 40, 50, 2, 3, 5, 50 },
+		{ 1, 45, 60, 2, 4, 6, 60 },
+		{ 2, 50, 70, 3, 5, 7, 70 }
 	}
 };
 
@@ -136,3 +136,8 @@ int aBattleTileColor[2][10] =
 // 방향
 int xDir[4] = { 1,-1,0,0 };
 int yDir[4] = { 0,0,1,-1 };
+
+// 델타 타임
+LARGE_INTEGER g_tSecond; // 초당 클록수
+LARGE_INTEGER g_tTime;	// 이전 클록수
+float g_fDeltaTime = 0.f;

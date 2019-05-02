@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Init.h"
 #include "Global.h"
 
@@ -12,6 +13,10 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	cursorInfo.dwSize = 1;
 	cursorInfo.bVisible = FALSE;
 	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
+	
+	// 델타 타임 계산
+	QueryPerformanceCounter(&g_tTime);
+	QueryPerformanceFrequency(&g_tSecond);
 
 	for (int i = 0; i < TOTAL_ECASTLE_NUM; ++i)
 	{
@@ -66,13 +71,8 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	pPlayer->m_nMouseOn = OFF;
 	pPlayer->m_tMouse.x = 0;
 	pPlayer->m_tMouse.y = 0;
+	pPlayer->m_nBattleMapMode = BM_MOVE;
 	strcpy(pPlayer->m_cShape, "●");
-
-	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
-	{
-		pPlayer->m_nSoldierTurn[i] = 0;
-		pPlayer->m_pSoldiers[i] = NULL;
-	}
 		
 	if (!CreatePlayerSoldier(pPlayer))
 	{
@@ -94,6 +94,9 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 			ppBattleMaps[i]->m_tEnemyStartPos[j].y = 0;
 			ppBattleMaps[i]->m_tPlayerStartPos[j].x = 0;
 			ppBattleMaps[i]->m_tPlayerStartPos[j].y = 0;
+			ppBattleMaps[i]->m_nEnemyCount = 0;
+			ppBattleMaps[i]->m_nRewardMin = 100;
+			ppBattleMaps[i]->m_nRewardMax = 300;
 			ppBattleMaps[i]->m_nCurTurn = TT_PLAYER;
 		}
 		LoadBattleMap(ppBattleMaps[i], i);
@@ -198,13 +201,55 @@ void CheckEnemyCastleArea(PECASTLE pECastle)
 int CreatePlayerSoldier(PPLAYER pPlayer)
 {
 	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
-		if ((pPlayer->m_pSoldiers[i] = CreateSoldier(i, TT_PLAYER, 0)) == NULL)
-			return 0;
+		pPlayer->m_tSoldiers[i] = CreateSoldier(i, TT_PLAYER, 1);
 
 	return 1;
 }
 
-PSOLDIER CreateSoldier(int nType, int nTeam, int nUpgrade)
+SOLDIER CreateSoldier(int nType, int nTeam, int nUpgrade)
+{
+	SOLDIER tSoldier;
+
+	tSoldier.m_tPos.x = 0;
+	tSoldier.m_tPos.y = 0;
+
+	tSoldier.m_nType = nType;
+	tSoldier.m_nTeam = nTeam;
+	tSoldier.m_nCurUpgrade = nUpgrade;
+	tSoldier.m_bAttackFlag = 0;
+	tSoldier.m_bMoveFlag = 0;
+	tSoldier.m_bTurn = 1;
+	tSoldier.m_nDie = 0;
+
+	tSoldier.m_nMoveRange = LevelStatusTable[nType][tSoldier.m_nCurUpgrade][MOVE];
+
+	tSoldier.m_nAttackMin = LevelStatusTable[nType][tSoldier.m_nCurUpgrade][ATMIN];
+	tSoldier.m_nAttackMax = LevelStatusTable[nType][tSoldier.m_nCurUpgrade][ATMAX];
+	tSoldier.m_nAttackRange = LevelStatusTable[nType][tSoldier.m_nCurUpgrade][RANGE];
+
+	tSoldier.m_nArmorMin = LevelStatusTable[nType][tSoldier.m_nCurUpgrade][ARMIN];
+	tSoldier.m_nArmorMax = LevelStatusTable[nType][tSoldier.m_nCurUpgrade][ARMAX];
+
+	tSoldier.m_nHp = LevelStatusTable[nType][tSoldier.m_nCurUpgrade][HP];
+	tSoldier.m_nCurHp = tSoldier.m_nHp;
+
+	tSoldier.m_nUpgradeMax = 3;
+
+	strcpy(tSoldier.m_strName, LevelCharacterNameTable[nType][tSoldier.m_nCurUpgrade]);
+	strcpy(tSoldier.m_cShape, LevelCharacterShapeTable[nType][tSoldier.m_nCurUpgrade]);
+	strcpy(tSoldier.m_strClass, CharacterClassName[nType]);
+
+	if (tSoldier.m_nTeam == TT_PLAYER)
+		tSoldier.m_nColor = BROWN;
+	else if (tSoldier.m_nTeam == TT_ALLY)
+		tSoldier.m_nColor = MAGENTA;
+	else if (tSoldier.m_nTeam == TT_ENEMY)
+		tSoldier.m_nColor = RED;
+
+	return tSoldier;
+}
+
+PSOLDIER PCreateSoldier(int nType, int nTeam, int nUpgrade)
 {
 	PSOLDIER pSoldier = (PSOLDIER)malloc(sizeof(SOLDIER));
 
@@ -258,7 +303,7 @@ int LoadWorldMap(PECASTLE* ppECastle)
 
 	int nX = 0;
 	int nY = 0;
-
+	
 	while (!feof(fp))
 	{
 		char cTmp = fgetc(fp);
@@ -399,18 +444,21 @@ int LoadBattleMap(PBATTLEMAP pBattleMap, int nCurFileIndex)
 		{
 			pBattleMap->m_tEnemyStartPos[SC_KNIGHT].x = nX;
 			pBattleMap->m_tEnemyStartPos[SC_KNIGHT].y = nY;
+			pBattleMap->m_nEnemyCount++;
 			cTmp = MBT_GROUND;
 		}
 		else if (cTmp == MBT_ESOLDIER_C)
 		{
 			pBattleMap->m_tEnemyStartPos[SC_CAVALRY].x = nX;
 			pBattleMap->m_tEnemyStartPos[SC_CAVALRY].y = nY;
+			pBattleMap->m_nEnemyCount++;
 			cTmp = MBT_GROUND;
 		}
 		else if (cTmp == MBT_ESOLDIER_A)
 		{
 			pBattleMap->m_tEnemyStartPos[SC_ARCHER].x = nX;
 			pBattleMap->m_tEnemyStartPos[SC_ARCHER].y = nY;
+			pBattleMap->m_nEnemyCount++;
 			cTmp = MBT_GROUND;
 		}
 		else if (cTmp == MBT_PSOLDIER_K)
@@ -441,12 +489,12 @@ void InitBattleStage(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
 	{
 		// 플레이어 위치 지정
-		pPlayer->m_pSoldiers[i]->m_tPos.x = pBattleMap->m_tPlayerStartPos[i].x;
-		pPlayer->m_pSoldiers[i]->m_tPos.y = pBattleMap->m_tPlayerStartPos[i].y;
+		pPlayer->m_tSoldiers[i].m_tPos.x = pBattleMap->m_tPlayerStartPos[i].x;
+		pPlayer->m_tSoldiers[i].m_tPos.y = pBattleMap->m_tPlayerStartPos[i].y;
 
 		// 적 군 초기화
-		pBattleMap->m_pEnemy[i] = CreateSoldier(i, TT_ENEMY, 0);
-		pBattleMap->m_pEnemy[i]->m_tPos.x = pBattleMap->m_tEnemyStartPos[i].x;
-		pBattleMap->m_pEnemy[i]->m_tPos.y = pBattleMap->m_tEnemyStartPos[i].y;
+		pBattleMap->m_tEnemy[i] = CreateSoldier(i, TT_ENEMY, 0);
+		pBattleMap->m_tEnemy[i].m_tPos.x = pBattleMap->m_tEnemyStartPos[i].x;
+		pBattleMap->m_tEnemy[i].m_tPos.y = pBattleMap->m_tEnemyStartPos[i].y;
 	}
 }

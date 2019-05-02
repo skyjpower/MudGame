@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #include <memory.h>
+#include <time.h>
+#include <math.h>
 
 #include "Type.h"
 #include "Struct.h"
@@ -35,15 +37,18 @@
 
 #define STATUS_WINDOW_HEIGHT 30
 #define STATUS_WINDOW_WIDTH 15
-#define STATUS_STRING_MAXLENGTH 24
 
 #define EVENT_WINDOW_HEIGHT 6
-#define EVENT_WINDOW_WIDTH	30
+#define EVENT_WINDOW_WIDTH	45
+#define EVENT_STRING_MAXLENGTH 50
 
 #define CASTLE_WIN	1
 #define CASTLE_LOSE	0
 
 #define ON	1
 #define OFF 0
+
+#define DEAD 0
+#define ALIVE 1
 
 #define QUEUE_MAX_SIZE 1000

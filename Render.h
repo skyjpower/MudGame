@@ -22,5 +22,6 @@ void RenderBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
 // 상태 창 그리기
 void CreateStatusWindow();
 // 이벤트 창 메세지
-void EventWindowRenewal(const char* pEventString);
-// 선택한 사람의 
+void EventWindowRenewal();
+// 아군 땅 체크
+int CheckPlayerArea(int x, int y);

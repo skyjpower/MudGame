@@ -19,6 +19,21 @@ void DrawToBackBuffer(const int x, const int y, char image)
 	aBackBuffer[x][y] = image;
 }
 
+int CheckPlayerArea(int x, int y)
+{
+	if (aWorldMap[x][y] == MWT_PCASTLE || aWorldMap[x][y] == MWT_PCASTLEAREA) return TRUE;
+	// 위쪽 검사
+	if (x - 1 >= 0 && (aWorldMap[x - 1][y] == MWT_PCASTLE || aWorldMap[x - 1][y] == MWT_PCASTLEAREA)) return 1;
+	// 아래쪽 검사
+	if (x + 1 < MAP_HEIGHT_MAX && (aWorldMap[x + 1][y] == MWT_PCASTLE || aWorldMap[x + 1][y] == MWT_PCASTLEAREA)) return 1;
+	// 왼쪽 검사
+	if (y - 1 >= 0 && (aWorldMap[x][y - 1] == MWT_PCASTLE || aWorldMap[x][y - 1] == MWT_PCASTLEAREA)) return 1;
+	// 오른쪽 검사
+	if (y + 1 < MAP_WIDTH_MAX && (aWorldMap[x][y + 1] == MWT_PCASTLE || aWorldMap[x][y + 1] == MWT_PCASTLEAREA)) return 1;
+	
+	return FALSE;
+}
+
 void DrawAll(PPLAYER pPlayer)
 {
 	int nLeft = 0, nTop = 0, nRight = 0, nBottom = 0;
@@ -42,7 +57,7 @@ void DrawAll(PPLAYER pPlayer)
 			}
 			else
 			{
-				if (nLeft <= j && j <= nRight && nTop <= i && i <= nBottom)
+				if ((nLeft <= j && j <= nRight && nTop <= i && i <= nBottom) || CheckPlayerArea(i, j))
 					aBackBuffer[i][j] = aWorldMap[i][j];
 				else
 					aBackBuffer[i][j] = '\0';
@@ -243,21 +258,22 @@ void RenderWorldMap(PPLAYER pPlayer)
 	}
 }
 
-void EventWindowRenewal(const char* pEventString)
+void EventWindowRenewal()
 {
 	int nHeight = MAP_HEIGHT_MAX + (EVENT_WINDOW_HEIGHT / 2);
 	int nWidth = 4;
 	
-	int nLength = strlen(aEventMessage);
-
-	MoveCursorTo(nWidth, nHeight);
-	for (int i = 0; i < nLength; ++i) aEventMessage[i] = ' ';
+	MoveCursorTo(2, nHeight);
+	for (int i = 0; i < EVENT_WINDOW_WIDTH - 2; ++i)
+		printf("  ");
+	/*for (int i = 0; i < EVENT_STRING_MAXLENGTH; ++i) aEventMessage[i] = ' ';
 	printf(aEventMessage);
-	memset(aEventMessage, 0, sizeof(aEventMessage));
+	memset(aEventMessage, 0, sizeof(aEventMessage));*/
 
-	strcpy(aEventMessage, pEventString);
+	strcpy(aEventMessage, aEventTmpMessage);
+	memset(aEventTmpMessage, 0, sizeof(aEventTmpMessage));
 	MoveCursorTo(nWidth, nHeight);
-	printf(pEventString);
+	printf(aEventMessage);
 }
 
 void DrawECastle(PPLAYER pPlayer, PECASTLE pECastle)
@@ -315,7 +331,13 @@ void RenderBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 			nForeColor = aBattleTileColor[0][pBattleMap->m_aBattleMap[i][j] - '0'];
 			nBackColor = aBattleTileColor[1][pBattleMap->m_aBattleMap[i][j] - '0'];
 			if (pPlayer->m_nMouseOn == ON && pPlayer->m_tMouse.x == i && pPlayer->m_tMouse.y == j)
-				nBackColor = GREEN;
+			{
+				if (pPlayer->m_nBattleMapMode == BM_MOVE)
+					nBackColor = GREEN;
+				else if (pPlayer->m_nBattleMapMode == BM_BATTLE)
+					nBackColor = RED;
+			}
+				
 			else if (aBattleMapRange[i][j])
 				nBackColor = LIGHTGRAY;
 
@@ -324,40 +346,52 @@ void RenderBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 				MoveCursorTo(nTmp, i);
 
 				// 플레이어 기사
-				if (i == pPlayer->m_pSoldiers[SC_KNIGHT]->m_tPos.x && j == pPlayer->m_pSoldiers[SC_KNIGHT]->m_tPos.y)
+				if (!pPlayer->m_tSoldiers[SC_KNIGHT].m_nDie && 
+					i == pPlayer->m_tSoldiers[SC_KNIGHT].m_tPos.x &&
+					j == pPlayer->m_tSoldiers[SC_KNIGHT].m_tPos.y)
 				{
-					TextColor(pPlayer->m_pSoldiers[SC_KNIGHT]->m_nColor, nBackColor);
-					printf(pPlayer->m_pSoldiers[SC_KNIGHT]->m_cShape);
+					TextColor(pPlayer->m_tSoldiers[SC_KNIGHT].m_nColor, nBackColor);
+					printf(pPlayer->m_tSoldiers[SC_KNIGHT].m_cShape);
 				}
 				// 플레이어 기병
-				else if (i == pPlayer->m_pSoldiers[SC_CAVALRY]->m_tPos.x && j == pPlayer->m_pSoldiers[SC_CAVALRY]->m_tPos.y)
+				else if (!pPlayer->m_tSoldiers[SC_CAVALRY].m_nDie &&
+					i == pPlayer->m_tSoldiers[SC_CAVALRY].m_tPos.x && 
+					j == pPlayer->m_tSoldiers[SC_CAVALRY].m_tPos.y)
 				{
-					TextColor(pPlayer->m_pSoldiers[SC_CAVALRY]->m_nColor, nBackColor);
-					printf(pPlayer->m_pSoldiers[SC_CAVALRY]->m_cShape);
+					TextColor(pPlayer->m_tSoldiers[SC_CAVALRY].m_nColor, nBackColor);
+					printf(pPlayer->m_tSoldiers[SC_CAVALRY].m_cShape);
 				}
 				// 플레이어 궁사
-				else if (i == pPlayer->m_pSoldiers[SC_ARCHER]->m_tPos.x && j == pPlayer->m_pSoldiers[SC_ARCHER]->m_tPos.y)
+				else if (!pPlayer->m_tSoldiers[SC_ARCHER].m_nDie &&
+					i == pPlayer->m_tSoldiers[SC_ARCHER].m_tPos.x && 
+					j == pPlayer->m_tSoldiers[SC_ARCHER].m_tPos.y)
 				{
-					TextColor(pPlayer->m_pSoldiers[SC_ARCHER]->m_nColor, nBackColor);
-					printf(pPlayer->m_pSoldiers[SC_ARCHER]->m_cShape);
+					TextColor(pPlayer->m_tSoldiers[SC_ARCHER].m_nColor, nBackColor);
+					printf(pPlayer->m_tSoldiers[SC_ARCHER].m_cShape);
 				}
 				// 적 전사
-				else if (i == pBattleMap->m_pEnemy[SC_KNIGHT]->m_tPos.x && j == pBattleMap->m_pEnemy[SC_KNIGHT]->m_tPos.y)
+				else if (!pBattleMap->m_tEnemy[SC_KNIGHT].m_nDie && 
+					i == pBattleMap->m_tEnemy[SC_KNIGHT].m_tPos.x && 
+					j == pBattleMap->m_tEnemy[SC_KNIGHT].m_tPos.y)
 				{
-					TextColor(pBattleMap->m_pEnemy[SC_KNIGHT]->m_nColor, nBackColor);
-					printf(pBattleMap->m_pEnemy[SC_KNIGHT]->m_cShape);
+					TextColor(pBattleMap->m_tEnemy[SC_KNIGHT].m_nColor, nBackColor);
+					printf(pBattleMap->m_tEnemy[SC_KNIGHT].m_cShape);
 				}
 				// 적 기병
-				else if (i == pBattleMap->m_pEnemy[SC_CAVALRY]->m_tPos.x && j == pBattleMap->m_pEnemy[SC_CAVALRY]->m_tPos.y)
+				else if (!pBattleMap->m_tEnemy[SC_CAVALRY].m_nDie &&
+					i == pBattleMap->m_tEnemy[SC_CAVALRY].m_tPos.x && 
+					j == pBattleMap->m_tEnemy[SC_CAVALRY].m_tPos.y)
 				{
-					TextColor(pBattleMap->m_pEnemy[SC_CAVALRY]->m_nColor, nBackColor);
-					printf(pBattleMap->m_pEnemy[SC_CAVALRY]->m_cShape);
+					TextColor(pBattleMap->m_tEnemy[SC_CAVALRY].m_nColor, nBackColor);
+					printf(pBattleMap->m_tEnemy[SC_CAVALRY].m_cShape);
 				}
 				// 적 궁병
-				else if (i == pBattleMap->m_pEnemy[SC_ARCHER]->m_tPos.x && j == pBattleMap->m_pEnemy[SC_ARCHER]->m_tPos.y)
+				else if (!pBattleMap->m_tEnemy[SC_ARCHER].m_nDie &&
+					i == pBattleMap->m_tEnemy[SC_ARCHER].m_tPos.x && 
+					j == pBattleMap->m_tEnemy[SC_ARCHER].m_tPos.y)
 				{
-					TextColor(pBattleMap->m_pEnemy[SC_ARCHER]->m_nColor, nBackColor);
-					printf(pBattleMap->m_pEnemy[SC_ARCHER]->m_cShape);
+					TextColor(pBattleMap->m_tEnemy[SC_ARCHER].m_nColor, nBackColor);
+					printf(pBattleMap->m_tEnemy[SC_ARCHER].m_cShape);
 				}
 				// 땅
 				else if (aBackBuffer[i][j] == MBT_GROUND)
