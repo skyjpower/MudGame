@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #define CASTLE_HEIGHT_MAX 30
 #define CASTLE_WIDTH_MAX 30
 #define BATTLE_HEGIHT_MAX 30
@@ -26,9 +27,9 @@ typedef struct _tagSoldier
 
 	int m_nDie;	// 죽었는 지 여부
 
-	char	m_strName[12];		// 이름
-	char	m_strClass[12];		// 직업
-	char	m_cShape[3];		// 모양
+	char	m_strName[24];		// 이름
+	char	m_strClass[24];		// 직업
+	char	m_cShape[5];		// 모양
 
 	int		m_nType;			// 타입 ( 기병, 보병, 궁병 )
 	int		m_nColor;			// 색
@@ -40,19 +41,32 @@ typedef struct _tagSoldier
 
 }SOLDIER, *PSOLDIER;
 
-// 병사 리스트
-typedef struct _tagList
-{
-	SOLDIER*	m_pBegin;
-	SOLDIER*	m_pEnd;
-	int			m_nSize;
-
-}LIST, *PLIST;
-
 typedef struct _tagMouse
 {
 	int x, y; // 좌표
 }MOUSE, *PMOUSE;
+
+typedef struct _tagItem
+{
+	int m_eItemType;	// 아이템 타입
+
+	int m_nHpHeal;	// 체력 회복 정도
+	int m_nSoldierType;	// 대상
+
+	int m_nCount; // 아이템 개수
+
+	struct _tagItem* m_pPrev;
+	struct _tagItem* m_pNext;
+
+}ITEM, *PITEM;
+
+typedef struct _tagInventory
+{
+	PITEM m_pBegin;
+	PITEM m_pEnd;
+	int		m_nSize;
+
+}INVENTORY, *PINVENTORY;
 
 // 플레이어
 typedef struct _tagPlayer
@@ -65,15 +79,20 @@ typedef struct _tagPlayer
 	int		m_nHaveShip; // 물을 통과할 수 있는 지 여부
 	int		m_nSelectSoldier; // 선택된 병사
 	int		m_nBattleMapMode;
+	int		m_nCastleCount;
+
+	float	m_fTaxCollectionDelay;	// 세금걷는 시간
+	float	m_fCurTaxCollectionDelay;	// 현재 시간
 
 	MOUSE	m_tMouse;
 	int		m_nMouseOn;
 
 	char	m_cShape[3];
 	SOLDIER m_tSoldiers[3]; // 병사들
+
+	INVENTORY m_tInventory;
 	
 }PLAYER, *PPLAYER;
-
 
 
 // 배틀 맵

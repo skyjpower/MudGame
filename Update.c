@@ -29,7 +29,7 @@ int CheckCanMoveInECastle(int x, int y, PECASTLE pECastle)
 
 void Update(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 {
-	if (GetAsyncKeyState(VK_UP) & 0x8000)
+	if (GetAsyncKeyState(VK_UP) & 0x8001)
 	{
 		if (CheckCanMoveInWorld(pPlayer->m_nHaveShip, pPlayer->m_tWorldPos.x - 1, pPlayer->m_tWorldPos.y))
 		{
@@ -63,6 +63,19 @@ void Update(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 			pPlayer->m_tWorldPos.y++;
 			g_moveFlag = 1;
 		}
+	}
+
+	if (aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] == MWT_PCASTLE &&
+		GetAsyncKeyState('S') & 0x8000)
+	{
+		// 상점 열기
+		Shopping(pPlayer);
+	}
+
+	// 인벤토리 열기
+	if (GetAsyncKeyState('I') & 0x8000)
+	{
+		ShowInventory(pPlayer);
 	}
 
 	// 관리자
@@ -121,7 +134,7 @@ void Update(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	else if (aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] == MWT_ECASTLEAREA)
 	{
 		g_battleMapIndex = rand() % TOTAL_BATTLEMAP_NUM;
-		g_battleMapIndex = 2;
+		// g_battleMapIndex = 2;
 		ChangeWorldToBattleMap(pPlayer, ppBattleMaps[g_battleMapIndex]);
 
 		sprintf(aEventTmpMessage, "적과 조우하였습니다.");
@@ -231,10 +244,13 @@ void UpdateInCastle(PPLAYER pPlayer, PECASTLE pECastle)
 
 		// 보상 획득
 		pPlayer->m_nMoney += pECastle->m_nReward;
-
+		pPlayer->m_nCastleCount++;
+		
 		EventWindowRenewal("공성전 클리어 !");
 		// 월드맵으로 이동
 		ChangeCastleToWorld(pPlayer, CASTLE_WIN);
+		// 스테이터스 창 리프레쉬
+		StatusWindowRefresh(pPlayer);
 	}
 
 	// 패배 판정 시
@@ -344,6 +360,8 @@ void ChangeBattleMapToWorld(PPLAYER pPlayer, PBATTLEMAP pBattleMap, int nWinTeam
 	g_gameMode = MM_WORLDMAP;
 	memset(aBackBuffer, 0, sizeof(aBackBuffer));	
 	g_moveFlag = 1;
+	StatusWindowRefresh(pPlayer);
+	EventWindowRenewal();
 }
 
 void CalcSoldierRange(PPLAYER pPlayer, PSOLDIER pSoldier, PBATTLEMAP pBattleMap)
@@ -528,7 +546,7 @@ int AttackManager(PSOLDIER pAttacker, PSOLDIER pDefender)
 	if (pDefender->m_nCurHp <= 0)
 	{
 		sprintf(aEventTmpMessage, "%s %s(이)가 사망하였습니다.",
-			DefenderTeam, pDefender->m_strName, nDamage);
+			DefenderTeam, pDefender->m_strName);
 		EventWindowRenewal();
 		DelayTime(1.5f);
 		return DEAD;
@@ -554,6 +572,7 @@ void DelayTime(float waitTime)
 		nWait += g_fDeltaTime;
 		CalcDeltaTime();
 	}
+	rewind(stdin);
 }
 
 int CheckEndPlayerTurn(PPLAYER pPlayer)
@@ -606,6 +625,7 @@ int CheckEnemyAroundPlayerSoldier(PSOLDIER pSoldier, PBATTLEMAP pBattleMap)
 
 void PlayerSoldierUpdate(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 {
+
 #pragma region Move
 	// 움직임 가능
 	if (pPlayer->m_nMouseOn == ON)
@@ -646,8 +666,7 @@ void PlayerSoldierUpdate(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 			}
 		}
 #pragma endregion
-		
-
+	
 #pragma region ModeIsMove
 		// 무브 모드
 		if (pPlayer->m_nBattleMapMode == BM_MOVE && !pPlayer->m_tSoldiers[pPlayer->m_nSelectSoldier].m_bMoveFlag)
@@ -660,6 +679,20 @@ void PlayerSoldierUpdate(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 				if (pPlayer->m_tMouse.x !=pSeletSoldier->m_tPos.x ||
 					pPlayer->m_tMouse.y !=pSeletSoldier->m_tPos.y)
 				{
+					for (int i = 0; i < pBattleMap->m_nEnemyCount; ++i)
+					{
+						// 해당 지점에 죽지 않은 적이 있는 경우
+						if (!pBattleMap->m_tEnemy[i].m_nDie && 
+							pBattleMap->m_tEnemy[i].m_tPos.x == pPlayer->m_tMouse.x &&
+							pBattleMap->m_tEnemy[i].m_tPos.y == pPlayer->m_tMouse.y)
+						{
+							sprintf(aEventTmpMessage, "해당 지점에 이동할 수 없습니다.");
+							EventWindowRenewal();
+							return;
+						}
+					}
+
+
 					pSeletSoldier->m_tPos.x = pPlayer->m_tMouse.x;
 					pSeletSoldier->m_tPos.y = pPlayer->m_tMouse.y;
 
@@ -682,6 +715,7 @@ void PlayerSoldierUpdate(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 			}
 		}
 #pragma endregion
+
 #pragma region ModeIsBattle
 		else if ( !pPlayer->m_tSoldiers[pPlayer->m_nSelectSoldier].m_bAttackFlag &&
 					pPlayer->m_nMouseOn && 
@@ -727,9 +761,9 @@ void PlayerSoldierUpdate(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 			pPlayer->m_nMouseOn = OFF;
 			g_moveFlag = 1;
 		}
+	}
 #pragma endregion
 
-	}
 }
 
 void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
@@ -814,7 +848,7 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 			EventWindowRenewal();
 		}
 	}
-#pragma endregion
+
 
 	// 캐릭터 선택
 	if ( pPlayer->m_nSelectSoldier >= SC_KNIGHT && 
@@ -823,7 +857,9 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	{
 		SetMousePos(pPlayer, pBattleMap);
 	}
+#pragma endregion
 
+#pragma region SoldierUpdate
 	// 병사 움직임
 	PlayerSoldierUpdate(pPlayer, pBattleMap);
 	
@@ -847,7 +883,9 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 				pPlayer->m_tSoldiers[i].m_bTurn = 0;
 		}
 	}
+#pragma endregion
 
+#pragma region TurnCheck
 	// 턴 종료 체크
 	if (CheckEndPlayerTurn(pPlayer))
 	{
@@ -863,6 +901,9 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 		sprintf(aEventTmpMessage, "상대방 차례입니다...");
 		EventWindowRenewal();
 	}
+#pragma endregion
+
+	StatusWindowRefresh(pPlayer);
 }
 
 int CheckEndBattleGame(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
@@ -905,4 +946,298 @@ int CheckEndBattleGame(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	if (endFlag) return TT_PLAYER;
 
 	return TT_NONE;
+}
+
+void CollectionTaxFromCastle(PPLAYER pPlayer)
+{
+	pPlayer->m_fCurTaxCollectionDelay += g_fDeltaTime;
+	if (pPlayer->m_fCurTaxCollectionDelay >= pPlayer->m_fTaxCollectionDelay)
+	{
+		pPlayer->m_nMoney += (pPlayer->m_nCastleCount * 2);
+		pPlayer->m_fCurTaxCollectionDelay = 0.f;
+		StatusWindowRefresh(pPlayer);
+	}
+}
+
+void Shopping(PPLAYER pPlayer)
+{
+	sprintf(aEventTmpMessage, "상점에 오신 걸 환영합니다 !");
+	EventWindowRenewal();
+
+	int nShopping = 1; // 쇼핑 중
+	int nSelectItem = 1; // 선택한 아이템
+
+	int nWidth = SUBWINDOW_WIDTH_OFFSET + 6;
+	int nHeight = SUBWINDOW_HEIGHT_OFFSET + 2;
+
+	// 서브 윈도우 키기
+	OnOffSubWindow(ON);
+	// 상점 리스트 보여주기
+	for (int i = 0; i < SHOP_ITEMS_COUNT; ++i)
+	{
+		MoveCursorTo(nWidth, nHeight);
+		printf("%s", aShopItems[i]);
+		MoveCursorTo(nWidth + 20, nHeight);
+		printf("%d 원", aShopItemsPrice[i]);
+
+		nHeight += 2;
+	}
+
+	MoveCursorTo(nWidth, nHeight + 2);
+	printf("구매 : Space");
+	MoveCursorTo(nWidth, nHeight + 4);
+	printf("나가기 : ESC");
+	
+	MOUSE tMouse;
+	tMouse.x = SUBWINDOW_HEIGHT_OFFSET + 2;
+	tMouse.y = nWidth - 3;
+	int nTop = SUBWINDOW_HEIGHT_OFFSET + 2;
+	int nBottom = nTop + (2 * SHOP_ITEMS_COUNT) - 2;
+
+	while (nShopping)
+	{
+		// Move MouseCursor
+		if (GetAsyncKeyState(VK_UP) & 0x8000)
+		{
+			if (tMouse.x > nTop)
+			{
+				tMouse.x -= 2;
+				nSelectItem--;
+			}
+				
+		}
+		
+		if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+		{
+			if (tMouse.x < nBottom)
+			{
+				tMouse.x += 2;
+				nSelectItem++;
+			}
+		}
+		
+		if (GetAsyncKeyState(VK_SPACE) & 0x8000)
+		{
+			// 아이템 구매
+			if (pPlayer->m_nMoney >= aShopItemsPrice[nSelectItem - 1])
+			{
+				int nHave = 0;
+				// 아이템 생성 및 인벤토리에 추가
+				PITEM pItem = CreateItem(nSelectItem);
+
+				PITEM search = pPlayer->m_tInventory.m_pBegin->m_pNext;
+				while (search != pPlayer->m_tInventory.m_pEnd)
+				{
+					// 같은 종류의 아이템인 경우
+					if (search->m_eItemType == pItem->m_eItemType)
+					{
+						SAFE_DELETE(pItem)
+						search->m_nCount++;
+						nHave = 1;
+						break;
+					}
+					search = search->m_pNext;
+				}
+
+				if (!nHave)
+				{
+					// 첫 추가
+					if (pPlayer->m_tInventory.m_pBegin->m_pNext == pPlayer->m_tInventory.m_pEnd)
+					{
+						pPlayer->m_tInventory.m_pBegin->m_pNext = pItem;
+						pItem->m_pPrev = pPlayer->m_tInventory.m_pBegin;
+
+						pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
+						pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
+						pPlayer->m_tInventory.m_nSize++;
+					}
+					else
+					{
+						PITEM pPrev = pPlayer->m_tInventory.m_pEnd->m_pPrev;
+
+						pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
+						pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
+
+						pPrev->m_pNext = pItem;
+						pItem->m_pPrev = pPrev;
+
+						pPlayer->m_tInventory.m_nSize++;
+					}
+				}
+
+				// 머니 감소
+				pPlayer->m_nMoney -= aShopItemsPrice[nSelectItem - 1];
+
+				sprintf(aEventTmpMessage, "%s 를 구매하셨습니다 !", aShopItems[nSelectItem - 1]);
+				EventWindowRenewal();
+
+				DelayTime(2.0f);
+				StatusWindowRefresh(pPlayer);
+			}
+			else
+			{
+				sprintf(aEventTmpMessage, "돈이 부족합니다.. ");
+				EventWindowRenewal();
+
+				DelayTime(1.5f);
+			}
+		}
+
+		// Draw MouseCursor
+		for (int i = 0; i < SHOP_ITEMS_COUNT; ++i)
+		{
+			MoveCursorTo(tMouse.y, nTop + (i * 2));
+			printf("  ");
+		}
+		MoveCursorTo(tMouse.y, tMouse.x);
+		printf("☞");
+		Sleep(33);
+
+		if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+			nShopping = 0;
+	}
+	
+	OnOffSubWindow(OFF);
+	sprintf(aEventTmpMessage, "이용해주셔서 감사합니다 !");
+	EventWindowRenewal();
+	DelayTime(1.0f);
+
+	return;
+}
+
+PITEM CreateItem(int itemNum)
+{
+	PITEM pItem = (PITEM)malloc(sizeof(ITEM));
+	pItem->m_eItemType = itemNum;
+	pItem->m_nHpHeal = 100;
+	pItem->m_nSoldierType = itemNum - 1;
+	pItem->m_nCount = 1;
+	pItem->m_pNext = NULL;
+	pItem->m_pPrev = NULL;
+}
+
+void InventoryList(PPLAYER pPlayer)
+{
+	int nWidth = SUBWINDOW_WIDTH_OFFSET + 6;
+	int nHeight = SUBWINDOW_HEIGHT_OFFSET + 2;
+
+	PITEM pItem = pPlayer->m_tInventory.m_pBegin->m_pNext;
+	while (pItem != pPlayer->m_tInventory.m_pEnd)
+	{
+		MoveCursorTo(nWidth, nHeight);
+		PITEM pNext = pItem->m_pNext;
+		printf("%s", aShopItems[pItem->m_eItemType - 1]);
+		MoveCursorTo(nWidth + 20, nHeight);
+		printf("%d", pItem->m_nCount);
+		pItem = pNext;
+		nHeight += 2;
+	}
+}
+
+void ShowInventory(PPLAYER pPlayer)
+{
+	sprintf(aEventTmpMessage, "인벤토리 입니다.");
+	EventWindowRenewal();
+
+	int nShowing = 1;
+	OnOffSubWindow(ON);
+
+	// 인벤토리 아이템들 출력
+	int nWidth = SUBWINDOW_WIDTH_OFFSET + 6;
+	int nHeight = SUBWINDOW_HEIGHT_OFFSET + 2;
+
+	MOUSE tMouse;
+	tMouse.x = SUBWINDOW_HEIGHT_OFFSET + 2;
+	tMouse.y = nWidth - 3;
+	int nTop = SUBWINDOW_HEIGHT_OFFSET + 2;
+	int nBottom = nTop + (2 * pPlayer->m_tInventory.m_nSize) - 2;
+
+	InventoryList(pPlayer);
+	int nSelectItem = 1;
+
+	while (nShowing)
+	{
+		// Move MouseCursor
+		if (GetAsyncKeyState(VK_UP) & 0x8000)
+		{
+			if (tMouse.x > nTop)
+			{
+				tMouse.x -= 2;
+				nSelectItem--;
+			}
+		}
+
+		if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+		{
+			if (tMouse.x < nBottom)
+			{
+				tMouse.x += 2;
+				nSelectItem++;
+			}
+		}
+
+		if (GetAsyncKeyState(VK_SPACE) & 0x8000)
+		{
+			if (pPlayer->m_tInventory.m_nSize >= nSelectItem)
+			{
+				// 아이템 사용
+				PITEM pItem = pPlayer->m_tInventory.m_pBegin->m_pNext;
+				for (int i = 1; i < nSelectItem; ++i)
+				{
+					pItem = pItem->m_pNext;
+				}
+
+				pItem->m_nCount--;
+				// 아이템이 이제 없는 경우
+				if (pItem->m_nCount <= 0)
+				{
+					PITEM pPrev = pItem->m_pPrev;
+					PITEM pNext = pItem->m_pNext;
+
+					pPrev->m_pNext = pNext;
+					pNext->m_pPrev = pPrev;
+					pPlayer->m_tInventory.m_nSize--;
+
+					free(pItem);
+
+					// 첫번째 아이템으로 보내주기
+					nSelectItem = 1;
+					tMouse.x = nTop;
+					nBottom -= 2;
+				}
+
+				sprintf(aEventTmpMessage, "아이템을 사용하였습니다.");
+				EventWindowRenewal();
+
+				SubWindowRefresh();
+				InventoryList(pPlayer);
+				DelayTime(1.5f);
+			}
+			else
+			{
+				sprintf(aEventTmpMessage, "사용하려는 아이템이 없습니다..");
+				EventWindowRenewal();
+
+				DelayTime(1.5f);
+			}
+			
+		}
+
+		// Draw MouseCursor
+		for (int i = 0; i < pPlayer->m_tInventory.m_nSize; ++i)
+		{
+			MoveCursorTo(tMouse.y, nTop + (i * 2));
+			printf("  ");
+		}
+		MoveCursorTo(tMouse.y, tMouse.x);
+		printf("☞");
+		Sleep(33);
+
+		if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
+			nShowing = 0;
+	}
+
+	OnOffSubWindow(OFF);
+	EventWindowRenewal();
+	DelayTime(1.0f);
 }

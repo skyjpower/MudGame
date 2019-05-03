@@ -63,6 +63,9 @@
     <ClInclude Include="Debugging.h">
       <Filter>소스 파일\05 Debug</Filter>
     </ClInclude>
+    <ClInclude Include="Macro.h">
+      <Filter>소스 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Text Include="NationWide.txt">

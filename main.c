@@ -29,25 +29,42 @@ int main()
 	if(DEBUG_MODE)
 		DebugSoliderList(&tPlayer);
 
+	StatusWindowRefresh(&tPlayer);
+
 	// PLAY
 	while (!g_gameOver)
 	{
+		// 델타타임 계산
 		CalcDeltaTime();
-		// 일반
+
+		// 월드맵
 		if (g_gameMode == MM_WORLDMAP)
 		{
 			DrawAll(&tPlayer);
+
+			// Update
 			Update(&tPlayer, &pECastles, pBattleMaps);
+
+			// 그리기
 			RenderWorldMap(&tPlayer);
+
+			// 세금 징수
+			CollectionTaxFromCastle(&tPlayer);
 		}
+
 		// 성(미로)
 		else if (g_gameMode == MM_CASTLEMAP)
 		{
 			DrawECastle(&tPlayer, pECastles[g_nEnableStage]);
+
+			// Update
 			UpdateInCastle(&tPlayer, pECastles[g_nEnableStage]);
+
+			// 그리기
 			RenderECastleMap(&tPlayer, pECastles[g_nEnableStage]);
 		}
-		// 배틀
+
+		// 배틀맵
 		else if (g_gameMode == MM_BATTLEMAP)
 		{
 			DrawBattleMap(&tPlayer, pBattleMaps[g_battleMapIndex]);
@@ -55,22 +72,17 @@ int main()
 			// 사용자의 턴
 			if (pBattleMaps[g_battleMapIndex]->m_nCurTurn == TT_PLAYER)
 				UpdateInBattleMap(&tPlayer, pBattleMaps[g_battleMapIndex]);
+
 			// 적 턴인 경우 AI
 			else if (pBattleMaps[g_battleMapIndex]->m_nCurTurn == TT_ENEMY)
 				BattleMapEnemyAI(&tPlayer, pBattleMaps[g_battleMapIndex]);
 
+			// 그리기
 			RenderBattleMap(&tPlayer, pBattleMaps[g_battleMapIndex]);
 
 			// 배틀이 끝난 경우
 			if ((nBattleEnd = CheckEndBattleGame(&tPlayer, pBattleMaps[g_battleMapIndex])))
-			{
-				// 플레이어의 승리
-				if (nBattleEnd == TT_PLAYER)
-					ChangeBattleMapToWorld(&tPlayer, pBattleMaps[g_battleMapIndex], TT_PLAYER);
-				// 적군의 승리
-				else
-					ChangeBattleMapToWorld(&tPlayer, pBattleMaps[g_battleMapIndex], TT_ENEMY);
-			}
+				ChangeBattleMapToWorld(&tPlayer, pBattleMaps[g_battleMapIndex], nBattleEnd);
 		}
 	}
 	
@@ -81,33 +93,42 @@ int main()
 		while (pArea != pECastles[i]->m_tAreaPosList->m_pEnd)
 		{
 			PAREA pNext = pArea->m_pNext;
-			free(pArea);
+			SAFE_DELETE(pArea)
 			pArea = pNext;
 		}
-		free(pECastles[i]->m_tAreaPosList->m_pBegin);
-		free(pECastles[i]->m_tAreaPosList->m_pEnd);
-		free(pECastles[i]->m_tAreaPosList);
+		SAFE_DELETE(pECastles[i]->m_tAreaPosList->m_pBegin)
+		SAFE_DELETE(pECastles[i]->m_tAreaPosList->m_pEnd)
+		SAFE_DELETE(pECastles[i]->m_tAreaPosList)
 
 		PDOOR pDoor = pECastles[i]->m_tDoorPosList->m_pBegin->m_pNext;
 		while (pDoor != pECastles[i]->m_tDoorPosList->m_pEnd)
 		{
 			PDOOR pNext = pDoor->m_pNext;
-			free(pDoor);
+			SAFE_DELETE(pDoor)
 			pDoor = pNext;
 		}
 
-		free(pECastles[i]->m_tDoorPosList->m_pBegin);
-		free(pECastles[i]->m_tDoorPosList->m_pEnd);
-		free(pECastles[i]->m_tDoorPosList);
+		SAFE_DELETE(pECastles[i]->m_tDoorPosList->m_pBegin)
+		SAFE_DELETE(pECastles[i]->m_tDoorPosList->m_pEnd)
+		SAFE_DELETE(pECastles[i]->m_tDoorPosList)
 
-		free(pECastles[i]);
+		SAFE_DELETE(pECastles[i])
 	}
 	
 	// 배틀맵 free
 	for (int i = 0; i < TOTAL_BATTLEMAP_NUM; ++i)
+		SAFE_DELETE(pBattleMaps[i])
+
+	// 플레이어 인벤토리 free
+	PITEM pItem = tPlayer.m_tInventory.m_pBegin->m_pNext;
+	while (pItem != tPlayer.m_tInventory.m_pEnd)
 	{
-		free(pBattleMaps);
+		PITEM pNext = pItem->m_pNext;
+		SAFE_DELETE(pItem)
+		pItem = pNext;
 	}
+	SAFE_DELETE(tPlayer.m_tInventory.m_pBegin)
+	SAFE_DELETE(tPlayer.m_tInventory.m_pEnd)
 
 	_CrtDumpMemoryLeaks();
 	return 0;

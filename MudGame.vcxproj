@@ -154,6 +154,7 @@
     <ClInclude Include="Game.h" />
     <ClInclude Include="Global.h" />
     <ClInclude Include="Init.h" />
+    <ClInclude Include="Macro.h" />
     <ClInclude Include="Render.h" />
     <ClInclude Include="Struct.h" />
     <ClInclude Include="Type.h" />

@@ -1,5 +1,9 @@
 ﻿  main.c
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\main.c(40): warning C4047: '함수': 'PECASTLE *'의 간접 참조 수준이 'PECASTLE (*)[3]'과(와) 다릅니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\main.c(40): warning C4024: 'Update': 형식 및 실제 매개 변수 2의 형식이 서로 다릅니다.
+c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\main.c(46): warning C4047: '함수': 'PECASTLE *'의 간접 참조 수준이 'PECASTLE (*)[3]'과(와) 다릅니다.
+c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\main.c(46): warning C4024: 'Update': 형식 및 실제 매개 변수 2의 형식이 서로 다릅니다.
+  Update.c
+  Global.c
+  코드를 생성하고 있습니다...
+c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\update.c(1117): warning C4716: 'CreateItem': 값을 반환해야 합니다.
   MudGame.vcxproj -> C:\Users\hrd-321-16\Documents\Visual Studio 2015\Projects\MudGame\Debug\MudGame.exe
   MudGame.vcxproj -> C:\Users\hrd-321-16\Documents\Visual Studio 2015\Projects\MudGame\Debug\MudGame.pdb (Full PDB)

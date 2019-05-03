@@ -55,3 +55,13 @@ void BattleMapEnemyAI(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
 void CalcDeltaTime();
 // 주어진 시간만큼 딜레이
 void DelayTime(float waitTime);
+
+// 세금 징수
+void CollectionTaxFromCastle(PPLAYER pPlayer);
+
+// 쇼핑
+void Shopping(PPLAYER pPlayer);
+// 아이템 생성
+PITEM CreateItem(int itemNum);
+// 인벤토리 창
+void ShowInventory(PPLAYER pPlayer);

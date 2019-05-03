@@ -13,8 +13,10 @@ char aClearBuffer[MAP_HEIGHT_MAX][MAP_WIDTH_MAX] = { 0 };
 char aEventWindow[EVENT_WINDOW_HEIGHT][EVENT_WINDOW_WIDTH] = { 0 };
 char aEventMessage[EVENT_STRING_MAXLENGTH] = { 0 };
 char aEventTmpMessage[EVENT_STRING_MAXLENGTH] = { 0 };
-// 상태 창
+
+// 상태 창 및 서브 창
 char aStatusWindow[STATUS_WINDOW_HEIGHT][STATUS_WINDOW_WIDTH] = { 0 };
+char aSubWindow[SUBWINDOW_HEIGHT][SUBWINDOW_WIDTH] = { 0 };
 
 POINT tStartPos;
 
@@ -80,17 +82,36 @@ char LevelCharacterNameTable[3][3][12] = {
 	}
 };
 
-// 레벨에 따른 모양 테이블
+// 레벨에 따른 모양 테이블 ( 아군 )
 char LevelCharacterShapeTable[3][3][3] = {
 	{
 		{ "■" },
 		{ "▣" },
-		{ "◈" }
+		{ "盾" }
+	},
+	{
+		{ "％" },
+		{ "㏇" },
+		{ "馬" }
+	},
+	{
+		{ "＆" },
+		{ "※" },
+		{ "弓" }
+	}
+};
+
+// 레벨에 따른 모양 테이블 ( 적군 )
+char LevelEnemyShapeTable[3][3][3] = {
+	{
+		{ "●" },
+		{ "◎" },
+		{ "＠" }
 	},
 	{
 		{ "§" },
-		{ "㏇" },
-		{ "╊" }
+		{ "№" },
+		{ "㏂" }
 	},
 	{
 		{ "＆" },
@@ -132,6 +153,20 @@ int aBattleTileColor[2][10] =
 	{ BLACK, WHITE, BLUE, GREEN, LIGHTGRAY, LIGHTGRAY, LIGHTGRAY, LIGHTGRAY, LIGHTGRAY, LIGHTGRAY },
 	{ BLACK, BLACK, BLUE, GREEN, BLACK, BLACK, BLACK, BLACK, BLACK, BLACK }
 };
+
+// 상점 물품 목록
+char aShopItems[SHOP_ITEMS_COUNT][30] =
+{
+	{ "기사 체력 회복약" },
+	{ "기병 체력 회복약" },
+	{ "궁병 체력 회복약" },
+	{ "전체 체력 회복약" },
+	{ "병사 업그레이드" },
+	{ "지도" },
+	{ "배" }
+};
+
+int aShopItemsPrice[SHOP_ITEMS_COUNT] = {10, 10, 10, 3000, 10000, 100000, 30000};
 
 // 방향
 int xDir[4] = { 1,-1,0,0 };

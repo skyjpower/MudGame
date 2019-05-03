@@ -13,6 +13,7 @@ extern char aEventMessage[EVENT_STRING_MAXLENGTH];
 extern char aEventTmpMessage[EVENT_STRING_MAXLENGTH];
 
 extern char aStatusWindow[STATUS_WINDOW_HEIGHT][STATUS_WINDOW_WIDTH];
+extern char aSubWindow[SUBWINDOW_HEIGHT][SUBWINDOW_WIDTH];
 
 extern POINT tStartPos;
 
@@ -41,6 +42,9 @@ extern int yDir[4];
 extern char CharacterClassName[3][12];
 extern char LevelCharacterNameTable[3][3][12];
 extern char LevelCharacterShapeTable[3][3][3];
+extern char LevelEnemyShapeTable[3][3][3];
+extern char aShopItems[SHOP_ITEMS_COUNT][30];
+extern int aShopItemsPrice[SHOP_ITEMS_COUNT];
 
 extern const int MOVE, ATMIN, ATMAX, RANGE, ARMIN, ARMAX, HP;
 

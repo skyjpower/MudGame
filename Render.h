@@ -25,3 +25,9 @@ void CreateStatusWindow();
 void EventWindowRenewal();
 // 아군 땅 체크
 int CheckPlayerArea(int x, int y);
+// 스테이터스 창 리프레쉬
+void StatusWindowRefresh(PPLAYER pPlayer);
+// 서브 창 온 오프
+void OnOffSubWindow(int nFlag);
+// 서브 창 리프레쉬
+void SubWindowRefresh();

@@ -6,7 +6,7 @@
 int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 {
 	// 콘솔 창 크기
-	system("mode con cols=100 lines=40");
+	system("mode con cols=150 lines=45");
 
 	// 커서 깜빡임 없애주는 코드
 	CONSOLE_CURSOR_INFO cursorInfo = { 0 };
@@ -18,6 +18,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	QueryPerformanceCounter(&g_tTime);
 	QueryPerformanceFrequency(&g_tSecond);
 
+	// 캐슬 Init
 	for (int i = 0; i < TOTAL_ECASTLE_NUM; ++i)
 	{
 		ppECastle[i] = (PECASTLE)malloc(sizeof(ECASTLE));
@@ -51,17 +52,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 
 		memset(ppECastle[i]->m_aECastleMap, 0, sizeof(ppECastle[i]->m_aECastleMap));
 	}
-
-	// 맵 불러오기
-	if (!LoadWorldMap(ppECastle))
-	{
-		puts("맵을 불러오는 데 실패했습니다.");
-		return 0;
-	}
-
-	// 플레이어 초기화
-	pPlayer->m_tWorldPos.x = tStartPos.x;
-	pPlayer->m_tWorldPos.y = tStartPos.y;
+	// 플레이어 Init
 	pPlayer->m_tPos.x = 0;
 	pPlayer->m_tPos.y = 0;
 	pPlayer->m_nHaveShip = 0;
@@ -72,22 +63,44 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	pPlayer->m_tMouse.x = 0;
 	pPlayer->m_tMouse.y = 0;
 	pPlayer->m_nBattleMapMode = BM_MOVE;
+	pPlayer->m_nCastleCount = 0;
+	pPlayer->m_fTaxCollectionDelay = 5.0f;
+	pPlayer->m_fCurTaxCollectionDelay = 0.f;
+	pPlayer->m_tInventory.m_pBegin = (PITEM)malloc(sizeof(ITEM));
+	pPlayer->m_tInventory.m_pEnd = (PITEM)malloc(sizeof(ITEM));
+	pPlayer->m_tInventory.m_nSize = 0;
+	pPlayer->m_tInventory.m_pBegin->m_pNext = pPlayer->m_tInventory.m_pEnd;
+	pPlayer->m_tInventory.m_pBegin->m_pPrev = NULL;
+	pPlayer->m_tInventory.m_pEnd->m_pPrev = pPlayer->m_tInventory.m_pBegin;
+	pPlayer->m_tInventory.m_pEnd->m_pNext = NULL;
+
 	strcpy(pPlayer->m_cShape, "●");
-		
+	
+	// 월드맵 Load
+	if (!LoadWorldMap(pPlayer, ppECastle))
+	{
+		puts("맵을 불러오는 데 실패했습니다.");
+		return 0;
+	}
+
+	// 적 성의 영토를 리스트에 저장
+	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
+		CheckEnemyCastleArea(ppECastle[i]);
+
+	
+	// 플레이어 병사 Init
 	if (!CreatePlayerSoldier(pPlayer))
 	{
 		puts("플레이어의 병사들을 초기화 중 오류가 났습니다.");
 		return 0;
 	}
 
-	// 각 적 성의 영토를 리스트에 저장
-	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
-		CheckEnemyCastleArea(ppECastle[i]);
-
-	// 배틀 맵 초기화
+	
+	// 배틀 맵 Init
 	for (int i = 0; i < TOTAL_BATTLEMAP_NUM; ++i)
 	{
-		ppBattleMaps[i] = (PBATTLEMAP)malloc(sizeof(BATTLEMAP));
+		ppBattleMaps[i] = (PBATTLEMAP)malloc(sizeof(BATTLEMAP) + 1);
+
 		for (int j = 0; j < TOTAL_SOLDIER_NUM; ++j)
 		{
 			ppBattleMaps[i]->m_tEnemyStartPos[j].x = 0;
@@ -100,11 +113,9 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 			ppBattleMaps[i]->m_nCurTurn = TT_PLAYER;
 		}
 		LoadBattleMap(ppBattleMaps[i], i);
+		InitBattleStage(ppBattleMaps[i]);
 	}
-
-	// 배틀맵 초기화
-	for (int i = 0; i < TOTAL_BATTLEMAP_NUM; ++i)
-		InitBattleStage(pPlayer, ppBattleMaps[i]);
+		
 
 	// 이벤트 창 초기화
 	for (int i = 0; i < EVENT_WINDOW_HEIGHT; ++i)
@@ -126,6 +137,20 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 				|| i == STATUS_WINDOW_HEIGHT - 1
 				|| j == STATUS_WINDOW_WIDTH - 1)
 				aStatusWindow[i][j] = '1';
+		}
+	}
+	for (int i = 1; i < STATUS_WINDOW_WIDTH - 1; ++i)
+		aStatusWindow[STATUS_WINDOW_HEIGHT - 1][i] = '0';
+
+	// 서브 창 초기화
+	for (int i = 0; i < SUBWINDOW_HEIGHT; ++i)
+	{
+		for (int j = 0; j < SUBWINDOW_WIDTH; ++j)
+		{
+			if (i == 0 || j == 0
+				|| i == SUBWINDOW_HEIGHT - 1
+				|| j == SUBWINDOW_WIDTH - 1)
+				aSubWindow[i][j] = '1';
 		}
 	}
 
@@ -201,7 +226,7 @@ void CheckEnemyCastleArea(PECASTLE pECastle)
 int CreatePlayerSoldier(PPLAYER pPlayer)
 {
 	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
-		pPlayer->m_tSoldiers[i] = CreateSoldier(i, TT_PLAYER, 1);
+		pPlayer->m_tSoldiers[i] = CreateSoldier(i, TT_PLAYER, 2);
 
 	return 1;
 }
@@ -236,7 +261,10 @@ SOLDIER CreateSoldier(int nType, int nTeam, int nUpgrade)
 	tSoldier.m_nUpgradeMax = 3;
 
 	strcpy(tSoldier.m_strName, LevelCharacterNameTable[nType][tSoldier.m_nCurUpgrade]);
-	strcpy(tSoldier.m_cShape, LevelCharacterShapeTable[nType][tSoldier.m_nCurUpgrade]);
+	if(nTeam == TT_ENEMY)
+		strcpy(tSoldier.m_cShape, LevelEnemyShapeTable[nType][tSoldier.m_nCurUpgrade]);
+	else
+		strcpy(tSoldier.m_cShape, LevelCharacterShapeTable[nType][tSoldier.m_nCurUpgrade]);
 	strcpy(tSoldier.m_strClass, CharacterClassName[nType]);
 
 	if (tSoldier.m_nTeam == TT_PLAYER)
@@ -288,7 +316,7 @@ PSOLDIER PCreateSoldier(int nType, int nTeam, int nUpgrade)
 	return pSoldier;
 }
 
-int LoadWorldMap(PECASTLE* ppECastle)
+int LoadWorldMap(PPLAYER pPlayer, PECASTLE* ppECastle)
 {
 	int nECastleIndex = 0;
 
@@ -317,8 +345,12 @@ int LoadWorldMap(PECASTLE* ppECastle)
 		{
 			tStartPos.x = nX;
 			tStartPos.y = nY;
+			pPlayer->m_tWorldPos.x = nX;
+			pPlayer->m_tWorldPos.y = nY;
 			cTmp = MWT_PCASTLEAREA;
 		}
+		else if (cTmp == MWT_PCASTLE)
+			pPlayer->m_nCastleCount++;
 		else if (cTmp == MWT_ECASTLE)
 		{
 			ppECastle[nECastleIndex]->m_tWorldPos.x = nX;
@@ -484,14 +516,10 @@ int LoadBattleMap(PBATTLEMAP pBattleMap, int nCurFileIndex)
 	}
 }
 
-void InitBattleStage(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
+void InitBattleStage(PBATTLEMAP pBattleMap)
 {
 	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
 	{
-		// 플레이어 위치 지정
-		pPlayer->m_tSoldiers[i].m_tPos.x = pBattleMap->m_tPlayerStartPos[i].x;
-		pPlayer->m_tSoldiers[i].m_tPos.y = pBattleMap->m_tPlayerStartPos[i].y;
-
 		// 적 군 초기화
 		pBattleMap->m_tEnemy[i] = CreateSoldier(i, TT_ENEMY, 0);
 		pBattleMap->m_tEnemy[i].m_tPos.x = pBattleMap->m_tEnemyStartPos[i].x;
