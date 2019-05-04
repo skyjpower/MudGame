@@ -1,8 +1,10 @@
 #pragma once
 #include "Game.h"
 
-// 전체 맵 초기화 및 로드
+// 전체 초기화
 int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps);
+// 기본 초기화
+void BasicInit(PPLAYER pPlayer);
 // 플레이어 병사 생성
 int CreatePlayerSoldier(PPLAYER pPlayer);
 // 병사 생성
@@ -15,3 +17,21 @@ int LoadECastleMap(PECASTLE pECastle, const char* FileName);
 void CheckEnemyCastleArea(PECASTLE pECastle);
 // 배틀 맵 시작 전 초기화
 void InitBattleStage(PBATTLEMAP pBattleMap);
+// Save
+void SavePlayer(PPLAYER pPlayer);
+void SaveWorldMap();
+void SaveECastleMap(PECASTLE* ppECastleMaps);
+void SaveBattleMaps(PBATTLEMAP* ppBattleMaps);
+
+
+// Load
+int LoadPlayer(PPLAYER pPlayer);
+int LoadWorld();
+int LoadECastles(PECASTLE* ppECastleMaps);
+int LoadBattleMaps(PBATTLEMAP* ppBattleMaps);
+
+
+// 콘솔 초기화
+void ConsoleInit();
+// 메인 화면
+int MainMenuScene();

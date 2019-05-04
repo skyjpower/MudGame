@@ -79,10 +79,7 @@ typedef struct _tagPlayer
 	int		m_nHaveShip; // 물을 통과할 수 있는 지 여부
 	int		m_nSelectSoldier; // 선택된 병사
 	int		m_nBattleMapMode;
-	int		m_nCastleCount;
-
-	float	m_fTaxCollectionDelay;	// 세금걷는 시간
-	float	m_fCurTaxCollectionDelay;	// 현재 시간
+	int		m_nAreaCount; // 영역
 
 	MOUSE	m_tMouse;
 	int		m_nMouseOn;

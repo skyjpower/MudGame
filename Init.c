@@ -5,19 +5,6 @@
 
 int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 {
-	// 콘솔 창 크기
-	system("mode con cols=150 lines=45");
-
-	// 커서 깜빡임 없애주는 코드
-	CONSOLE_CURSOR_INFO cursorInfo = { 0 };
-	cursorInfo.dwSize = 1;
-	cursorInfo.bVisible = FALSE;
-	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
-	
-	// 델타 타임 계산
-	QueryPerformanceCounter(&g_tTime);
-	QueryPerformanceFrequency(&g_tSecond);
-
 	// 캐슬 Init
 	for (int i = 0; i < TOTAL_ECASTLE_NUM; ++i)
 	{
@@ -46,7 +33,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 		ppECastle[i]->m_tAreaPosList->m_pEnd = (PAREA)malloc(sizeof(AREA));
 		ppECastle[i]->m_tAreaPosList->m_pBegin->m_pNext = ppECastle[i]->m_tAreaPosList->m_pEnd;
 		ppECastle[i]->m_tAreaPosList->m_pEnd->m_pPrev = ppECastle[i]->m_tAreaPosList->m_pBegin;
-		ppECastle[i]->m_tDoorPosList->m_nSize = 0;
+		ppECastle[i]->m_tAreaPosList->m_nSize = 0;
 		ppECastle[i]->m_tAreaPosList->m_pBegin->m_pPrev = NULL;
 		ppECastle[i]->m_tAreaPosList->m_pEnd->m_pNext = NULL;
 
@@ -63,9 +50,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	pPlayer->m_tMouse.x = 0;
 	pPlayer->m_tMouse.y = 0;
 	pPlayer->m_nBattleMapMode = BM_MOVE;
-	pPlayer->m_nCastleCount = 0;
-	pPlayer->m_fTaxCollectionDelay = 5.0f;
-	pPlayer->m_fCurTaxCollectionDelay = 0.f;
+	pPlayer->m_nAreaCount = 0;
 	pPlayer->m_tInventory.m_pBegin = (PITEM)malloc(sizeof(ITEM));
 	pPlayer->m_tInventory.m_pEnd = (PITEM)malloc(sizeof(ITEM));
 	pPlayer->m_tInventory.m_nSize = 0;
@@ -115,15 +100,23 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 		LoadBattleMap(ppBattleMaps[i], i);
 		InitBattleStage(ppBattleMaps[i]);
 	}
-		
+
+	return 1;
+}
+
+void BasicInit(PPLAYER pPlayer)
+{
+	// 델타 타임 계산
+	QueryPerformanceCounter(&g_tTime);
+	QueryPerformanceFrequency(&g_tSecond);
 
 	// 이벤트 창 초기화
 	for (int i = 0; i < EVENT_WINDOW_HEIGHT; ++i)
 	{
 		for (int j = 0; j < EVENT_WINDOW_WIDTH; ++j)
-			if (i == 0 
-				|| j == 0 
-				|| i == EVENT_WINDOW_HEIGHT - 1 
+			if (i == 0
+				|| j == 0
+				|| i == EVENT_WINDOW_HEIGHT - 1
 				|| j == EVENT_WINDOW_WIDTH - 1)
 				aEventWindow[i][j] = '1';
 	}
@@ -156,8 +149,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 
 	// 이벤트 및 스테이터스 창 출력
 	CreateStatusWindow();
-
-	return 1;
+	StatusWindowRefresh(pPlayer);
 }
 
 void CheckEnemyCastleArea(PECASTLE pECastle)
@@ -192,32 +184,21 @@ void CheckEnemyCastleArea(PECASTLE pECastle)
 				POINT tmp = { next_x, next_y };
 				visit[next_x][next_y] = 1;
 				queue[nRear++] = tmp;
+				pECastle->m_tAreaPosList->m_nSize++;
 
 				PAREA pArea = (PAREA)malloc(sizeof(AREA));
 				pArea->m_tPos.x = next_x;
 				pArea->m_tPos.y = next_y;
 				pArea->m_beOccupied = 0;
-				
-				// 첫 노드인 경우
-				if (pECastle->m_tAreaPosList->m_pEnd->m_pPrev == pECastle->m_tAreaPosList->m_pBegin)
-				{
-					pECastle->m_tAreaPosList->m_pBegin->m_pNext = pArea;
-					pArea->m_pPrev = pECastle->m_tAreaPosList->m_pBegin;
+	
+				PAREA pPrev = pECastle->m_tAreaPosList->m_pEnd->m_pPrev;
 
-					pECastle->m_tAreaPosList->m_pEnd->m_pPrev = pArea;
-					pArea->m_pNext = pECastle->m_tAreaPosList->m_pEnd;
-				}
-				// 노드가 한 개라도 있는 경우
-				else
-				{
-					PAREA pPrev = pECastle->m_tAreaPosList->m_pEnd->m_pPrev;
+				pPrev->m_pNext = pArea;
+				pArea->m_pPrev = pPrev;
 
-					pPrev->m_pNext = pArea;
-					pArea->m_pPrev = pPrev;
+				pArea->m_pNext = pECastle->m_tAreaPosList->m_pEnd;
+				pECastle->m_tAreaPosList->m_pEnd->m_pPrev = pArea;
 
-					pArea->m_pNext = pECastle->m_tAreaPosList->m_pEnd;
-					pECastle->m_tAreaPosList->m_pEnd->m_pPrev = pArea;
-				}
 			}
 		}
 	}
@@ -348,9 +329,10 @@ int LoadWorldMap(PPLAYER pPlayer, PECASTLE* ppECastle)
 			pPlayer->m_tWorldPos.x = nX;
 			pPlayer->m_tWorldPos.y = nY;
 			cTmp = MWT_PCASTLEAREA;
+			pPlayer->m_nAreaCount++;
 		}
-		else if (cTmp == MWT_PCASTLE)
-			pPlayer->m_nCastleCount++;
+		else if (cTmp == MWT_PCASTLEAREA)
+			pPlayer->m_nAreaCount++;
 		else if (cTmp == MWT_ECASTLE)
 		{
 			ppECastle[nECastleIndex]->m_tWorldPos.x = nX;
@@ -421,24 +403,12 @@ int LoadECastleMap(PECASTLE pECastle, const char* FileName)
 			pDoor->m_nClosed = 1;
 			pECastle->m_tDoorPosList->m_nSize++;
 
-			// 문 추가
-			if (pECastle->m_tDoorPosList->m_pBegin->m_pNext == pECastle->m_tDoorPosList->m_pEnd)
-			{
-				pECastle->m_tDoorPosList->m_pBegin->m_pNext = pDoor;
-				pDoor->m_pPrev = pECastle->m_tDoorPosList->m_pBegin;
+			PDOOR pPrev = pECastle->m_tDoorPosList->m_pEnd->m_pPrev;
+			pDoor->m_pPrev = pPrev;
+			pPrev->m_pNext = pDoor;
 
-				pECastle->m_tDoorPosList->m_pEnd->m_pPrev = pDoor;
-				pDoor->m_pNext = pECastle->m_tDoorPosList->m_pEnd;
-			}
-			else
-			{
-				PDOOR pPrev = pECastle->m_tDoorPosList->m_pEnd->m_pPrev;
-				pDoor->m_pPrev = pPrev;
-				pPrev->m_pNext = pDoor;
-
-				pDoor->m_pNext = pECastle->m_tDoorPosList->m_pEnd;
-				pECastle->m_tDoorPosList->m_pEnd->m_pPrev = pDoor;
-			}
+			pDoor->m_pNext = pECastle->m_tDoorPosList->m_pEnd;
+			pECastle->m_tDoorPosList->m_pEnd->m_pPrev = pDoor;
 		}
 
 		pECastle->m_aECastleMap[nX][nY++] = cTmp;
@@ -524,5 +494,428 @@ void InitBattleStage(PBATTLEMAP pBattleMap)
 		pBattleMap->m_tEnemy[i] = CreateSoldier(i, TT_ENEMY, 0);
 		pBattleMap->m_tEnemy[i].m_tPos.x = pBattleMap->m_tEnemyStartPos[i].x;
 		pBattleMap->m_tEnemy[i].m_tPos.y = pBattleMap->m_tEnemyStartPos[i].y;
+	}
+}
+
+void SavePlayer(PPLAYER pPlayer)
+{
+	FILE* fp = NULL;
+	fp = fopen("Player.ply", "wb");
+
+	if (fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return;
+	}
+
+	// 플레이어 캐슬맵 위치
+	fwrite(&pPlayer->m_tPos, sizeof(POINT), 1, fp);
+	// 플레이어 월드맵 위치
+	fwrite(&pPlayer->m_tWorldPos, sizeof(POINT), 1, fp);
+	// 소지 금액
+	fwrite(&pPlayer->m_nMoney, sizeof(int), 1, fp);
+	// 색상
+	fwrite(&pPlayer->m_nColor, sizeof(int), 1, fp);
+	// 물을 통과할 수 있는 지 여부
+	fwrite(&pPlayer->m_nHaveShip, sizeof(int), 1, fp);
+	// 선택된 병사
+	fwrite(&pPlayer->m_nSelectSoldier, sizeof(int), 1, fp);
+	// 배틀맵 모드
+	fwrite(&pPlayer->m_nBattleMapMode, sizeof(int), 1, fp);
+	// 플레이어 영역
+	fwrite(&pPlayer->m_nAreaCount, sizeof(int), 1, fp);
+	// 마우스 커서
+	fwrite(&pPlayer->m_tMouse, sizeof(MOUSE), 1, fp);
+	// 마우스 온 여부
+	fwrite(&pPlayer->m_nMouseOn, sizeof(int), 1, fp);
+	// 모양
+	fwrite(pPlayer->m_cShape, sizeof(char), 3, fp);
+	// 병사들
+	fwrite(pPlayer->m_tSoldiers, sizeof(SOLDIER), 3, fp);
+	// 인벤토리의 아이템 개수 저장
+	fwrite(&pPlayer->m_tInventory.m_nSize, sizeof(int), 1, fp);
+
+	// 인벤토리의 아이템들 저장
+	PITEM pItem = pPlayer->m_tInventory.m_pBegin->m_pNext;
+	while (pItem != pPlayer->m_tInventory.m_pEnd)
+	{
+		PITEM pNext = pItem->m_pNext;
+		fwrite(pItem, sizeof(ITEM), 1, fp);
+		pItem = pItem->m_pNext;
+	}
+}
+
+void SaveWorldMap()
+{
+	FILE *fp = NULL;
+	fp = fopen("WorldMap.map", "wb");
+	if (fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return;
+	}
+
+	// 월드맵 저장
+	fwrite(aWorldMap, MAP_WIDTH_MAX * MAP_HEIGHT_MAX, 1, fp);
+}
+
+
+void SaveECastleMap(PECASTLE * ppECastleMaps)
+{
+	FILE* fp = NULL;
+	fp = fopen("ECastleMaps.map", "wb");
+	if(fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return;
+	}
+
+	// 캐슬맵 저장
+	for (int i = 0; i < TOTAL_ECASTLE_NUM; ++i)
+	{
+		// 월드맵 좌표
+		fwrite(&ppECastleMaps[i]->m_tWorldPos, sizeof(POINT), 1, fp);
+		// 시작 좌표
+		fwrite(&ppECastleMaps[i]->m_tStartPos, sizeof(POINT), 1, fp);
+		// 목적지 좌표
+		fwrite(&ppECastleMaps[i]->m_tDestPos, sizeof(POINT), 1, fp);
+		// 열쇠 좌표
+		fwrite(&ppECastleMaps[i]->m_tKeyPos, sizeof(POINT), 1, fp);
+		// map
+		fwrite(ppECastleMaps[i]->m_aECastleMap, sizeof(char) * CASTLE_HEIGHT_MAX * CASTLE_WIDTH_MAX, 1, fp);
+		// 보상
+		fwrite(&ppECastleMaps[i]->m_nReward, sizeof(int), 1, fp);
+
+		// 도어 리스트 개수 저장
+		fwrite(&ppECastleMaps[i]->m_tDoorPosList->m_nSize, sizeof(int), 1, fp);
+		// 도어 저장
+		PDOOR pDoor = ppECastleMaps[i]->m_tDoorPosList->m_pBegin->m_pNext;
+		for (int j = 0; j < ppECastleMaps[i]->m_tDoorPosList->m_nSize; ++j)
+		{
+			fwrite(pDoor, sizeof(DOOR), 1, fp);
+			pDoor = pDoor->m_pNext;
+		}
+
+		// 영역 개수 저장
+		fwrite(&ppECastleMaps[i]->m_tAreaPosList->m_nSize, sizeof(int), 1, fp);
+		// 영역 저장
+		PAREA pArea = ppECastleMaps[i]->m_tAreaPosList->m_pBegin->m_pNext;
+		for (int j = 0; j < ppECastleMaps[i]->m_tAreaPosList->m_nSize; ++j)
+		{
+			fwrite(pArea, sizeof(AREA), 1, fp);
+			pArea = pArea->m_pNext;
+		}
+	}
+}
+
+void SaveBattleMaps(PBATTLEMAP * ppBattleMaps)
+{
+	FILE* fp = NULL;
+	fp = fopen("BattleMaps.map", "wb");
+	if (fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return;
+	}
+
+	// 배틀맵 저장
+	for (int i = 0; i < TOTAL_BATTLEMAP_NUM; ++i)
+	{
+		// 적군 수
+		fwrite(&ppBattleMaps[i]->m_nEnemyCount, sizeof(int), 1, fp);
+
+		// 적군 스타트 포지션
+		fwrite(ppBattleMaps[i]->m_tEnemyStartPos, sizeof(POINT), 3, fp);
+
+		// 아군 스타트 포지션
+		fwrite(ppBattleMaps[i]->m_tPlayerStartPos, sizeof(POINT), 3, fp);
+
+		// 적군 유닛
+		fwrite(ppBattleMaps[i]->m_tEnemy, sizeof(SOLDIER), 3, fp);
+
+		// 현재 턴
+		fwrite(ppBattleMaps[i]->m_nCurTurn, sizeof(int), 1, fp);
+
+		// 보상 최소
+		fwrite(ppBattleMaps[i]->m_nRewardMin, sizeof(int), 1, fp);
+
+		// 보상 최대
+		fwrite(ppBattleMaps[i]->m_nRewardMax, sizeof(int), 1, fp);
+
+		// 맵
+		fwrite(ppBattleMaps[i]->m_aBattleMap, sizeof(char) * BATTLE_HEGIHT_MAX * BATTLE_WIDTH_MAX, 1, fp);
+	}		
+}
+
+int LoadPlayer(PPLAYER pPlayer)
+{
+	FILE* fp = NULL;
+	fp = fopen("Player.ply", "rb");
+
+	if (fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return FALSE;
+	}
+
+	// 플레이어 캐슬맵 위치
+	fread(&pPlayer->m_tPos, sizeof(POINT), 1, fp);
+	// 플레이어 월드맵 위치
+	fread(&pPlayer->m_tWorldPos, sizeof(POINT), 1, fp);
+	// 소지 금액
+	fread(&pPlayer->m_nMoney, sizeof(int), 1, fp);
+	// 색상
+	fread(&pPlayer->m_nColor, sizeof(int), 1, fp);
+	// 물을 통과할 수 있는 지 여부
+	fread(&pPlayer->m_nHaveShip, sizeof(int), 1, fp);
+	// 선택된 병사
+	fread(&pPlayer->m_nSelectSoldier, sizeof(int), 1, fp);
+	// 배틀맵 모드
+	fread(&pPlayer->m_nBattleMapMode, sizeof(int), 1, fp);
+	// 플레이어 영역
+	fread(&pPlayer->m_nAreaCount, sizeof(int), 1, fp);
+	// 마우스 커서
+	fread(&pPlayer->m_tMouse, sizeof(MOUSE), 1, fp);
+	// 마우스 온 여부
+	fread(&pPlayer->m_nMouseOn, sizeof(int), 1, fp);
+	// 모양
+	fread(pPlayer->m_cShape, sizeof(char), 3, fp);
+	// 병사들
+	fread(pPlayer->m_tSoldiers, sizeof(SOLDIER), 3, fp);
+
+	// 인벤토리 초기화
+	fread(&pPlayer->m_tInventory.m_nSize, sizeof(int), 1, fp);
+	pPlayer->m_tInventory.m_pBegin = (PITEM)malloc(sizeof(ITEM));
+	pPlayer->m_tInventory.m_pEnd = (PITEM)malloc(sizeof(ITEM));
+	pPlayer->m_tInventory.m_pBegin->m_pPrev = NULL;
+	pPlayer->m_tInventory.m_pBegin->m_pNext = pPlayer->m_tInventory.m_pEnd;
+	pPlayer->m_tInventory.m_pEnd->m_pNext = NULL;
+	pPlayer->m_tInventory.m_pEnd->m_pPrev = pPlayer->m_tInventory.m_pBegin;
+
+	// 인벤토리의 아이템들 저장
+	for (int i = 0; i < pPlayer->m_tInventory.m_nSize; ++i)
+	{
+		PITEM pItem = (PITEM)malloc(sizeof(ITEM));
+		fread(pItem, sizeof(ITEM), 1, fp);
+
+		PITEM pPrev = pPlayer->m_tInventory.m_pEnd->m_pPrev;
+		pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
+		pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
+
+		pItem->m_pPrev = pPrev;
+		pPrev->m_pNext = pItem;
+	}
+
+	return TRUE;
+}
+
+int LoadWorld()
+{
+	FILE *fp = NULL;
+	fp = fopen("WorldMap.map", "rb");
+	if (fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return;
+	}
+
+	// 월드맵 로드
+	fread(aWorldMap, MAP_WIDTH_MAX * MAP_HEIGHT_MAX, 1, fp);
+}
+
+int LoadECastles(PECASTLE* ppECastleMaps)
+{
+	FILE* fp = NULL;
+	fp = fopen("ECastleMaps.map", "rb");
+	if (fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return FALSE;
+	}
+
+	// 캐슬맵 읽어오기
+	for (int i = 0; i < TOTAL_ECASTLE_NUM; ++i)
+	{
+		ppECastleMaps[i] = (PECASTLE)malloc(sizeof(ECASTLE));
+		// 월드맵 좌표
+		fread(&ppECastleMaps[i]->m_tWorldPos, sizeof(POINT), 1, fp);
+		// 시작 좌표
+		fread(&ppECastleMaps[i]->m_tStartPos, sizeof(POINT), 1, fp);
+		// 목적지 좌표
+		fread(&ppECastleMaps[i]->m_tDestPos, sizeof(POINT), 1, fp);
+		// 열쇠 좌표
+		fread(&ppECastleMaps[i]->m_tKeyPos, sizeof(POINT), 1, fp);
+		// map
+		fread(ppECastleMaps[i]->m_aECastleMap, sizeof(char) * CASTLE_HEIGHT_MAX * CASTLE_WIDTH_MAX, 1, fp);
+		// 보상
+		fread(&ppECastleMaps[i]->m_nReward, sizeof(int), 1, fp);
+
+		// 도어 리스트 개수 저장
+		ppECastleMaps[i]->m_tDoorPosList = (PDLIST)malloc(sizeof(DLIST));
+		fread(&ppECastleMaps[i]->m_tDoorPosList->m_nSize, sizeof(int), 1, fp);
+
+		// 도어 읽어오기
+		ppECastleMaps[i]->m_tDoorPosList->m_pBegin = (PDOOR)malloc(sizeof(DOOR));
+		ppECastleMaps[i]->m_tDoorPosList->m_pEnd = (PDOOR)malloc(sizeof(DOOR));
+		ppECastleMaps[i]->m_tDoorPosList->m_pBegin->m_pPrev = NULL;
+		ppECastleMaps[i]->m_tDoorPosList->m_pBegin->m_pNext = ppECastleMaps[i]->m_tDoorPosList->m_pEnd;
+		ppECastleMaps[i]->m_tDoorPosList->m_pEnd->m_pNext = NULL;
+		ppECastleMaps[i]->m_tDoorPosList->m_pEnd->m_pPrev = ppECastleMaps[i]->m_tDoorPosList->m_pBegin;
+		
+		for (int j = 0; j < ppECastleMaps[i]->m_tDoorPosList->m_nSize; ++j)
+		{
+			PDOOR pDoor = (PDOOR)malloc(sizeof(DOOR));
+			fread(pDoor, sizeof(DOOR), 1, fp);
+			
+			PDOOR pPrev = ppECastleMaps[i]->m_tDoorPosList->m_pEnd->m_pPrev;
+			pDoor->m_pNext = ppECastleMaps[i]->m_tDoorPosList->m_pEnd;
+			ppECastleMaps[i]->m_tDoorPosList->m_pEnd->m_pPrev = pDoor;
+
+			pPrev->m_pNext = pDoor;
+			pDoor->m_pPrev = pPrev;
+		}
+
+		// 영역 개수 읽어오기
+		ppECastleMaps[i]->m_tAreaPosList = (PAREA)malloc(sizeof(AREA));
+		fread(&ppECastleMaps[i]->m_tAreaPosList->m_nSize, sizeof(int), 1, fp);
+
+		// 영역 읽어오기
+		ppECastleMaps[i]->m_tAreaPosList->m_pBegin = (PAREA)malloc(sizeof(AREA));
+		ppECastleMaps[i]->m_tAreaPosList->m_pEnd = (PAREA)malloc(sizeof(AREA));
+		ppECastleMaps[i]->m_tAreaPosList->m_pBegin->m_pPrev = NULL;
+		ppECastleMaps[i]->m_tAreaPosList->m_pBegin->m_pNext = ppECastleMaps[i]->m_tAreaPosList->m_pEnd;
+		ppECastleMaps[i]->m_tAreaPosList->m_pEnd->m_pNext = NULL;
+		ppECastleMaps[i]->m_tAreaPosList->m_pEnd->m_pPrev = ppECastleMaps[i]->m_tAreaPosList->m_pBegin;
+
+		for (int j = 0; j < ppECastleMaps[i]->m_tAreaPosList->m_nSize; ++j)
+		{
+			PAREA pArea = (PAREA)malloc(sizeof(AREA));
+			fread(pArea, sizeof(AREA), 1, fp);
+			
+			PAREA pPrev = ppECastleMaps[i]->m_tAreaPosList->m_pEnd->m_pPrev;
+			pArea->m_pNext = ppECastleMaps[i]->m_tAreaPosList->m_pEnd;
+			ppECastleMaps[i]->m_tAreaPosList->m_pEnd->m_pPrev = pArea;
+
+			pArea->m_pPrev = pPrev;
+			pPrev->m_pNext = pArea;
+		}
+	}
+		
+	return TRUE;
+}
+
+int LoadBattleMaps(PBATTLEMAP * ppBattleMaps)
+{
+	FILE* fp = NULL;
+	fp = fopen("BattleMaps.map", "wb");
+	if (fp == NULL)
+	{
+		puts("ERROR) 세이브 파일 오픈 실패");
+		return FALSE;
+	}
+
+	// 배틀맵 저장
+	for (int i = 0; i < TOTAL_BATTLEMAP_NUM; ++i)
+	{
+		ppBattleMaps[i] = (PBATTLEMAP)malloc(sizeof(BATTLEMAP));
+		
+		// 적군 수
+		fread(&ppBattleMaps[i]->m_nEnemyCount, sizeof(int), 1, fp);
+
+		// 적군 스타트 포지션
+		fread(ppBattleMaps[i]->m_tEnemyStartPos, sizeof(POINT), 3, fp);
+
+		// 아군 스타트 포지션
+		fread(ppBattleMaps[i]->m_tPlayerStartPos, sizeof(POINT), 3, fp);
+
+		// 적군 유닛
+		fread(ppBattleMaps[i]->m_tEnemy, sizeof(SOLDIER), 3, fp);
+
+		// 현재 턴
+		fread(ppBattleMaps[i]->m_nCurTurn, sizeof(int), 1, fp);
+
+		// 보상 최소
+		fread(ppBattleMaps[i]->m_nRewardMin, sizeof(int), 1, fp);
+
+		// 보상 최대
+		fread(ppBattleMaps[i]->m_nRewardMax, sizeof(int), 1, fp);
+
+		// 맵
+		fread(ppBattleMaps[i]->m_aBattleMap, sizeof(char) * BATTLE_HEGIHT_MAX * BATTLE_WIDTH_MAX, 1, fp);
+	}
+	
+
+
+	return TRUE;
+}
+
+
+
+void ConsoleInit()
+{
+	// 콘솔 창 크기
+	system("mode con cols=150 lines=45");
+
+	// 커서 깜빡임 없애주는 코드
+	CONSOLE_CURSOR_INFO cursorInfo = { 0 };
+	cursorInfo.dwSize = 1;
+	cursorInfo.bVisible = FALSE;
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursorInfo);
+}
+
+int MainMenuScene()
+{
+	int nMenu = MT_NEW;
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT);
+	printf("1. 새로하기\n");
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 2);
+	printf("2. 이어하기\n");
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 4);
+	printf("3. 종료\n");
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 8);
+	printf("원하시는 메뉴를 선택한 후 SPACE를 누르세요...");
+	
+	MOUSE mouse;
+	mouse.x = MAINMENU_HEIGHT;
+	mouse.y = MAINMENU_WIDTH - 4;
+	MoveCursorTo(mouse.y, mouse.x);
+
+	// 메뉴 선택
+	while (1)
+	{
+		if (GetAsyncKeyState(VK_UP) & 0x8000)
+		{
+			if (nMenu > MT_NEW)
+			{
+				nMenu--;
+				mouse.x -= 2;
+			}
+		}
+
+		if (GetAsyncKeyState(VK_DOWN) & 0x8000)
+		{
+			if (nMenu < MT_EXIT)
+			{
+				nMenu++;
+				mouse.x += 2;
+			}
+		}
+
+		if (GetAsyncKeyState(VK_SPACE) & 0x8000)
+			return nMenu;
+
+		MoveCursorTo(mouse.y, mouse.x);
+		printf("▶");
+
+		// Refresh
+		for (int i = 0; i < MT_EXIT; ++i)
+		{
+			if (mouse.x != MAINMENU_HEIGHT + (i * 2) || mouse.y != MAINMENU_WIDTH - 4)
+			{
+				MoveCursorTo(MAINMENU_WIDTH - 4, MAINMENU_HEIGHT + (i * 2));
+				printf("  ");
+			}
+		}
+		Sleep(33);
 	}
 }

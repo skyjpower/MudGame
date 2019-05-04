@@ -8,7 +8,8 @@ int main()
 {
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF || _CRTDBG_LEAK_CHECK_DF);
 	// _CrtSetBreakAlloc();
-	
+
+	ConsoleInit();
 	srand((unsigned int)time(0)); // 씨앗
 
 	// 플레이어
@@ -17,19 +18,55 @@ int main()
 	PECASTLE pECastles[TOTAL_ECASTLE_NUM];
 	// 배틀맵
 	PBATTLEMAP pBattleMaps[TOTAL_BATTLEMAP_NUM];
-	// 배틀맵 종료 플래스
-	int nBattleEnd = 0;
 
-	if (!Init(&tPlayer, pECastles, pBattleMaps))
+	int nMenu;
+	nMenu = MainMenuScene();
+
+	// New
+	if (nMenu == MT_NEW)
 	{
-		puts("ERROR) 초기화 실패");
-		return 0;
+		if (!Init(&tPlayer, pECastles, pBattleMaps))
+		{
+			puts("ERROR) 초기화 실패");
+			return 0;
+		}
 	}
 
-	if(DEBUG_MODE)
-		DebugSoliderList(&tPlayer);
+	// Load
+	else if (nMenu == MT_LOAD)
+	{
+		if (!LoadPlayer(&tPlayer))
+		{
+			puts("로드에 실패했습니다.");
+			return 0;
+		}
+		if (!LoadWorld())
+		{
+			puts("로드에 실패했습니다");
+			return 0;
+		}
+		if (!LoadECastles(pECastles))
+		{
+			puts("로드에 실패했습니다");
+			return 0;
+		}
+		if (!LoadBattleMaps(pBattleMaps))
+		{
+			puts("로드에 실패했습니다.");
+			return 0;
+		}
+	}
 
-	StatusWindowRefresh(&tPlayer);
+	// Exit
+	else if (nMenu == MT_EXIT)
+		return 0;
+
+	BasicInit(&tPlayer);
+
+	// 배틀맵 종료 플래그
+	int nBattleEnd = 0;
+	// 한번 맵 렌더링 해주기
+	g_moveFlag = 1;
 
 	// PLAY
 	while (!g_gameOver)
@@ -49,7 +86,7 @@ int main()
 			RenderWorldMap(&tPlayer);
 
 			// 세금 징수
-			CollectionTaxFromCastle(&tPlayer);
+			// CollectionTaxFromCastle(&tPlayer);
 		}
 
 		// 성(미로)
@@ -86,6 +123,12 @@ int main()
 		}
 	}
 	
+	SavePlayer(&tPlayer);
+	SaveWorldMap();
+	SaveECastleMap(pECastles);
+	SaveBattleMaps(pBattleMaps);
+
+#pragma region FREE
 	// 캐슬 free
 	for (int i = 0; i < TOTAL_ECASTLE_NUM; ++i)
 	{
@@ -129,6 +172,7 @@ int main()
 	}
 	SAFE_DELETE(tPlayer.m_tInventory.m_pBegin)
 	SAFE_DELETE(tPlayer.m_tInventory.m_pEnd)
+#pragma endregion
 
 	_CrtDumpMemoryLeaks();
 	return 0;

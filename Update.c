@@ -241,10 +241,14 @@ void UpdateInCastle(PPLAYER pPlayer, PECASTLE pECastle)
 			free(pArea);
 			pArea = pNext;
 		}
+		pECastle->m_tAreaPosList->m_pBegin->m_pNext = pECastle->m_tAreaPosList->m_pEnd;
+		pECastle->m_tAreaPosList->m_pEnd->m_pPrev = pECastle->m_tAreaPosList->m_pBegin;
+		pECastle->m_tAreaPosList->m_pBegin->m_pPrev = NULL;
+		pECastle->m_tAreaPosList->m_pEnd->m_pNext = NULL;
 
 		// 보상 획득
 		pPlayer->m_nMoney += pECastle->m_nReward;
-		pPlayer->m_nCastleCount++;
+		pPlayer->m_nAreaCount++;
 		
 		EventWindowRenewal("공성전 클리어 !");
 		// 월드맵으로 이동
@@ -326,9 +330,53 @@ void ChangeBattleMapToWorld(PPLAYER pPlayer, PBATTLEMAP pBattleMap, int nWinTeam
 	// 플레이어의 승리
 	if (nWinTeam == TT_PLAYER)
 	{
-		// 승리 메세지
-		sprintf(aEventTmpMessage, "플레이어의 승리 !");
+		// 살아남은 병사 체크
+		int nAliveSoldierNum = 0;
+		for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
+			if (!pPlayer->m_tSoldiers[i].m_nDie)
+				nAliveSoldierNum++;
+
+		// 승리 메세지 및 적 영토 아군화
+		if (nAliveSoldierNum >= 3)
+		{
+			sprintf(aEventTmpMessage, "완벽한 승리 !");
+
+			aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] = MWT_PCASTLEAREA;
+			// 8방향 타일
+			for (int i = 0; i < 8; ++i)
+			{
+				int next_x = pPlayer->m_tWorldPos.x + xDir[i];
+				int next_y = pPlayer->m_tWorldPos.y + yDir[i];
+
+				if (next_x < 0 || next_y < 0 || next_x >= MAP_HEIGHT_MAX || next_y >= MAP_WIDTH_MAX) continue;
+				if (aWorldMap[next_x][next_y] == MWT_ECASTLEAREA)
+					aWorldMap[next_x][next_y] = MWT_PCASTLEAREA;
+			}
+
+
+		}
+		else if (nAliveSoldierNum >= 2)
+		{
+			sprintf(aEventTmpMessage, "평범한 승리 !");
+			aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] = MWT_PCASTLEAREA;
+			for (int i = 0; i < 4; ++i)
+			{
+				// 4방향 타일
+				int next_x = pPlayer->m_tWorldPos.x + xDir[i];
+				int next_y = pPlayer->m_tWorldPos.y + yDir[i];
+				
+				if (next_x < 0 || next_y < 0 || next_x >= MAP_HEIGHT_MAX || next_y >= MAP_WIDTH_MAX) continue;
+				if (aWorldMap[next_x][next_y] == MWT_ECASTLEAREA)
+					aWorldMap[next_x][next_y] = MWT_PCASTLEAREA;
+			}
+		}
+		else
+		{
+			sprintf(aEventTmpMessage, "초라한 승리 !");
+			aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] = MWT_PCASTLEAREA;
+		}
 		EventWindowRenewal();
+
 		DelayTime(1.f);
 		// 보상
 		int nReward = (rand() % (pBattleMap->m_nRewardMax - pBattleMap->m_nRewardMin)) + pBattleMap->m_nRewardMin;
@@ -337,9 +385,6 @@ void ChangeBattleMapToWorld(PPLAYER pPlayer, PBATTLEMAP pBattleMap, int nWinTeam
 		sprintf(aEventTmpMessage, "%d 원을 획득하였습니다.", nReward);
 		EventWindowRenewal();
 		DelayTime(1.f);
-
-		// 적 영토 아군화
-		aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] = MWT_PCASTLEAREA;
 	}
 	// 적의 승리
 	else if (nWinTeam == TT_ENEMY)
@@ -948,16 +993,18 @@ int CheckEndBattleGame(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	return TT_NONE;
 }
 
+/* 세금 징수 코드
 void CollectionTaxFromCastle(PPLAYER pPlayer)
 {
 	pPlayer->m_fCurTaxCollectionDelay += g_fDeltaTime;
 	if (pPlayer->m_fCurTaxCollectionDelay >= pPlayer->m_fTaxCollectionDelay)
 	{
-		pPlayer->m_nMoney += (pPlayer->m_nCastleCount * 2);
+		pPlayer->m_nMoney += (pPlayer->m_nAreaCount * 2);
 		pPlayer->m_fCurTaxCollectionDelay = 0.f;
 		StatusWindowRefresh(pPlayer);
 	}
 }
+*/
 
 void Shopping(PPLAYER pPlayer)
 {
@@ -1036,33 +1083,21 @@ void Shopping(PPLAYER pPlayer)
 						nHave = 1;
 						break;
 					}
+
 					search = search->m_pNext;
 				}
 
 				if (!nHave)
 				{
-					// 첫 추가
-					if (pPlayer->m_tInventory.m_pBegin->m_pNext == pPlayer->m_tInventory.m_pEnd)
-					{
-						pPlayer->m_tInventory.m_pBegin->m_pNext = pItem;
-						pItem->m_pPrev = pPlayer->m_tInventory.m_pBegin;
+					PITEM pPrev = pPlayer->m_tInventory.m_pEnd->m_pPrev;
 
-						pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
-						pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
-						pPlayer->m_tInventory.m_nSize++;
-					}
-					else
-					{
-						PITEM pPrev = pPlayer->m_tInventory.m_pEnd->m_pPrev;
+					pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
+					pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
 
-						pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
-						pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
+					pPrev->m_pNext = pItem;
+					pItem->m_pPrev = pPrev;
 
-						pPrev->m_pNext = pItem;
-						pItem->m_pPrev = pPrev;
-
-						pPlayer->m_tInventory.m_nSize++;
-					}
+					pPlayer->m_tInventory.m_nSize++;
 				}
 
 				// 머니 감소
@@ -1183,9 +1218,7 @@ void ShowInventory(PPLAYER pPlayer)
 				// 아이템 사용
 				PITEM pItem = pPlayer->m_tInventory.m_pBegin->m_pNext;
 				for (int i = 1; i < nSelectItem; ++i)
-				{
 					pItem = pItem->m_pNext;
-				}
 
 				pItem->m_nCount--;
 				// 아이템이 이제 없는 경우

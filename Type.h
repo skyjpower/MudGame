@@ -1,5 +1,13 @@
 #pragma once
 
+enum MAINMENU_TYPE
+{
+	MT_NONE,
+	MT_NEW,
+	MT_LOAD,
+	MT_EXIT
+};
+
 enum SOLDIER_CLASS
 {
 	SC_KNIGHT,

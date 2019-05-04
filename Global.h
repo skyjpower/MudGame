@@ -36,8 +36,8 @@ extern int aMapTileColor[2][7];
 extern int aCastleTileColor[2][6];
 extern int aBattleTileColor[2][10];
 
-extern int xDir[4];
-extern int yDir[4];
+extern int xDir[8];
+extern int yDir[8];
 
 extern char CharacterClassName[3][12];
 extern char LevelCharacterNameTable[3][3][12];

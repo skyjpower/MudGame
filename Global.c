@@ -168,9 +168,9 @@ char aShopItems[SHOP_ITEMS_COUNT][30] =
 
 int aShopItemsPrice[SHOP_ITEMS_COUNT] = {10, 10, 10, 3000, 10000, 100000, 30000};
 
-// 방향
-int xDir[4] = { 1,-1,0,0 };
-int yDir[4] = { 0,0,1,-1 };
+// 방향 | 상 하 좌 우 우하 우상 좌하 좌상
+int xDir[8] = { 1, -1, 0, 0, 1, -1, 1, -1 };
+int yDir[8] = { 0, 0, -1, 1, 1, 1, -1, -1 };
 
 // 델타 타임
 LARGE_INTEGER g_tSecond; // 초당 클록수

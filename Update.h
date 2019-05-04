@@ -1,6 +1,8 @@
 #pragma once
 #include "Game.h"
 
+/* Move Check */
+
 // 월드맵에서 움직임 확인
 int CheckCanMoveInWorld(int nShip, int x, int y);
 // 캐슬맵에서 움직임 확인
@@ -50,14 +52,13 @@ void BattleMapEnemyAI(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
 
 
 /* 시간 계산 */
-
 // 델타 타임 계산
 void CalcDeltaTime();
 // 주어진 시간만큼 딜레이
 void DelayTime(float waitTime);
 
 // 세금 징수
-void CollectionTaxFromCastle(PPLAYER pPlayer);
+// void CollectionTaxFromCastle(PPLAYER pPlayer);
 
 // 쇼핑
 void Shopping(PPLAYER pPlayer);

@@ -1,12 +1,3 @@
-/*
-	0501 : 상태 창
-	0502 : 배틀 맵
-	0503 : 배틀 로직
-	0504 : 상점
-*/
-
-
-
 #pragma once
 #define _CRT_SECURE_NO_WARNINGS
 
@@ -50,6 +41,9 @@
 #define SUBWINDOW_WIDTH 20
 #define SUBWINDOW_HEIGHT_OFFSET 5
 #define SUBWINDOW_WIDTH_OFFSET 99
+
+#define MAINMENU_HEIGHT 10
+#define MAINMENU_WIDTH	10
 
 #define CASTLE_WIN	1
 #define CASTLE_LOSE	0

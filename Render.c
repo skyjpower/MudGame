@@ -91,8 +91,6 @@ void StatusWindowRefresh(PPLAYER pPlayer)
 	MoveCursorTo(nWidth, nHeight);
 	printf("배 소지 여부 : %s", pPlayer->m_nHaveShip == 1 ? "O" : "X");
 	nHeight += 2;
-	MoveCursorTo(nWidth, nHeight);
-	printf("점령한 성 개수 : %d", pPlayer->m_nCastleCount);
 }
 
 void DrawAll(PPLAYER pPlayer)
