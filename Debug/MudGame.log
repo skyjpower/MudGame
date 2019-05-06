@@ -1,17 +1,2 @@
-﻿  Init.c
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(100): warning C4013: 'LoadBattleMap'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(151): warning C4013: 'CreateStatusWindow'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(152): warning C4013: 'StatusWindowRefresh'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(637): warning C4022: 'fwrite': 실제 매개 변수 1의 포인터가 일치하지 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(640): warning C4022: 'fwrite': 실제 매개 변수 1의 포인터가 일치하지 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(643): warning C4022: 'fwrite': 실제 매개 변수 1의 포인터가 일치하지 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(719): warning C4033: 'LoadWorld'은(는) 값을 반환해야 합니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(779): warning C4133: '=': 'PAREA'과(와) 'PALIST' 사이의 형식이 호환되지 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(835): warning C4022: 'fread': 실제 매개 변수 1의 포인터가 일치하지 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(838): warning C4022: 'fread': 실제 매개 변수 1의 포인터가 일치하지 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(841): warning C4022: 'fread': 실제 매개 변수 1의 포인터가 일치하지 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(869): warning C4013: 'MoveCursorTo'이(가) 정의되지 않았습니다. extern은 int형을 반환하는 것으로 간주합니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(487): warning C4715: 'LoadBattleMap': 모든 제어 경로에서 값을 반환하지는 않습니다.
-c:\users\hrd-321-16\documents\visual studio 2015\projects\mudgame\init.c(724): warning C4716: 'LoadWorld': 값을 반환해야 합니다.
-  MudGame.vcxproj -> C:\Users\hrd-321-16\Documents\Visual Studio 2015\Projects\MudGame\Debug\MudGame.exe
-  MudGame.vcxproj -> C:\Users\hrd-321-16\Documents\Visual Studio 2015\Projects\MudGame\Debug\MudGame.pdb (Full PDB)
+﻿  Update.c
+  MudGame.vcxproj -> C:\Users\user\Desktop\Projects\MudGame\Debug\MudGame.exe

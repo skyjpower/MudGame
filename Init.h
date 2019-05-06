@@ -11,12 +11,16 @@ int CreatePlayerSoldier(PPLAYER pPlayer);
 SOLDIER CreateSoldier(int nType, int nTeam, int nUpgrade);
 // 월드맵 불러오기
 int LoadWorldMap(PPLAYER pPlayer, PECASTLE* ppECastle);
-// 캐슬맵 불러오기
+// 캐슬맵 초기화
 int LoadECastleMap(PECASTLE pECastle, const char* FileName);
+// 배틀맵 초기화
+int LoadBattleMap(PBATTLEMAP pBattleMap, int nCurFileIndex);
+// 배틀 맵 시작 전 초기화
+void InitBattleStage(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
 // 적 영토 확인
 void CheckEnemyCastleArea(PECASTLE pECastle);
-// 배틀 맵 시작 전 초기화
-void InitBattleStage(PBATTLEMAP pBattleMap);
+
+
 // Save
 void SavePlayer(PPLAYER pPlayer);
 void SaveWorldMap();

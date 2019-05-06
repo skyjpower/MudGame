@@ -33,21 +33,6 @@ int CheckPlayerArea(int x, int y)
 			aBackBuffer[i][j] = aWorldMap[i][j];
 	}
 
-
-	/*
-	시야 범위가 1칸씩
-
-	if (aWorldMap[x][y] == MWT_PCASTLE || aWorldMap[x][y] == MWT_PCASTLEAREA) return TRUE;
-	// 위쪽 검사
-	if (x - 1 >= 0 && (aWorldMap[x - 1][y] == MWT_PCASTLE || aWorldMap[x - 1][y] == MWT_PCASTLEAREA)) return 1;
-	// 아래쪽 검사
-	if (x + 1 < MAP_HEIGHT_MAX && (aWorldMap[x + 1][y] == MWT_PCASTLE || aWorldMap[x + 1][y] == MWT_PCASTLEAREA)) return 1;
-	// 왼쪽 검사
-	if (y - 1 >= 0 && (aWorldMap[x][y - 1] == MWT_PCASTLE || aWorldMap[x][y - 1] == MWT_PCASTLEAREA)) return 1;
-	// 오른쪽 검사
-	if (y + 1 < MAP_WIDTH_MAX && (aWorldMap[x][y + 1] == MWT_PCASTLE || aWorldMap[x][y + 1] == MWT_PCASTLEAREA)) return 1;
-	*/
-
 	return FALSE;
 }
 
@@ -55,6 +40,17 @@ void StatusWindowRefresh(PPLAYER pPlayer)
 {
 	int nHeight = 1;
 	int nWidth = (MAP_WIDTH_MAX * 2 + 3);
+
+	int nReHegiht = nHeight;
+	int nReWidth = nWidth;
+	int nBottom = nReHegiht + 28;
+
+	// Refresh
+	for (int i = 0; i < nBottom; ++i)
+	{
+		MoveCursorTo(nReWidth, nReHegiht + i);
+		printf("                      ");
+	}
 
 	/* 병사 목록 출력 */
 	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
@@ -84,8 +80,6 @@ void StatusWindowRefresh(PPLAYER pPlayer)
 
 	// 플레이어 상태
 	MoveCursorTo(nWidth, nHeight);
-	printf("                      ");
-	MoveCursorTo(nWidth, nHeight);
 	printf("소지금 : %d", pPlayer->m_nMoney);
 	nHeight += 2;
 	MoveCursorTo(nWidth, nHeight);
@@ -93,17 +87,17 @@ void StatusWindowRefresh(PPLAYER pPlayer)
 	nHeight += 2;
 }
 
-void DrawAll(PPLAYER pPlayer)
+void DrawWorld(PPLAYER pPlayer)
 {
 	int nLeft = 0, nTop = 0, nRight = 0, nBottom = 0;
 
 	if (g_sightMode)
 	{
-		int sightRange = 2;
-		nLeft = pPlayer->m_tWorldPos.y - sightRange > 0 ? pPlayer->m_tWorldPos.y - sightRange : 0;
-		nTop = pPlayer->m_tWorldPos.x - sightRange > 0 ? pPlayer->m_tWorldPos.x - sightRange : 0;
-		nRight = pPlayer->m_tWorldPos.y + sightRange < MAP_WIDTH_MAX ? pPlayer->m_tWorldPos.y + sightRange : MAP_WIDTH_MAX - 1;
-		nBottom = pPlayer->m_tWorldPos.x + sightRange < MAP_WIDTH_MAX ? pPlayer->m_tWorldPos.x + sightRange : MAP_HEIGHT_MAX - 1;
+		int nSight = DEFAULT_SIGHT + pPlayer->m_nScope;
+		nLeft = pPlayer->m_tWorldPos.y - nSight > 0 ? pPlayer->m_tWorldPos.y - nSight : 0;
+		nTop = pPlayer->m_tWorldPos.x - nSight > 0 ? pPlayer->m_tWorldPos.x - nSight : 0;
+		nRight = pPlayer->m_tWorldPos.y + nSight < MAP_WIDTH_MAX ? pPlayer->m_tWorldPos.y + nSight : MAP_WIDTH_MAX - 1;
+		nBottom = pPlayer->m_tWorldPos.x + nSight < MAP_WIDTH_MAX ? pPlayer->m_tWorldPos.x + nSight : MAP_HEIGHT_MAX - 1;
 	}
 
 	for (int i = 0; i < MAP_HEIGHT_MAX; ++i)
@@ -132,8 +126,6 @@ void RenderECastleMap(PPLAYER pPlayer, PECASTLE pECastle)
 	// Draw
 	for (int i = 0; i < MAP_HEIGHT_MAX; ++i)
 	{
-		int nTmp = 0;
-
 		for (int j = 0; j < MAP_WIDTH_MAX; ++j)
 		{
 			int nForeColor = aCastleTileColor[0][pECastle->m_aECastleMap[i][j] - '0'];
@@ -141,12 +133,12 @@ void RenderECastleMap(PPLAYER pPlayer, PECASTLE pECastle)
 
 			if (aBackBuffer[i][j] != aFrontBuffer[i][j] || g_moveFlag)
 			{
-				MoveCursorTo(nTmp, i);
+				MoveCursorTo((j * 2), i);
 
 				// 플레이어인 경우
 				if (i == pPlayer->m_tPos.x && j == pPlayer->m_tPos.y)
 				{
-					MoveCursorTo(nTmp, i);
+					MoveCursorTo((j * 2), i);
 					TextColor(pPlayer->m_nColor, nBackColor);
 					printf(pPlayer->m_cShape);
 				}
@@ -180,6 +172,11 @@ void RenderECastleMap(PPLAYER pPlayer, PECASTLE pECastle)
 					TextColor(nForeColor, BLACK);
 					printf("♀");
 				}
+				else if (aBackBuffer[i][j] == MCT_EMPTYWALL)
+				{
+					TextColor(nForeColor, nBackColor);
+					printf("▩");
+				}
 				// 목적지
 				else if (pECastle->m_tDestPos.x == i && pECastle->m_tDestPos.y == j)
 				{
@@ -201,7 +198,6 @@ void RenderECastleMap(PPLAYER pPlayer, PECASTLE pECastle)
 					printf("  ");
 				}
 			}
-			nTmp += 2;
 		}
 	}
 
@@ -226,8 +222,6 @@ void RenderWorldMap(PPLAYER pPlayer)
 	// Draw
 	for (int i = 0; i < MAP_HEIGHT_MAX; ++i)
 	{
-		int nTmp = 0;
-
 		for (int j = 0; j < MAP_WIDTH_MAX; ++j)
 		{
 			int nForeColor = aMapTileColor[0][aWorldMap[i][j] - '0'];
@@ -235,12 +229,12 @@ void RenderWorldMap(PPLAYER pPlayer)
 
 			if (aBackBuffer[i][j] != aFrontBuffer[i][j] || g_moveFlag)
 			{
-				MoveCursorTo(nTmp, i);
+				MoveCursorTo((j * 2), i);
 
 				// 플레이어인 경우
 				if (i == pPlayer->m_tWorldPos.x && j == pPlayer->m_tWorldPos.y)
 				{
-					MoveCursorTo(nTmp, i);
+					MoveCursorTo((j * 2), i);
 					TextColor(pPlayer->m_nColor, nBackColor);
 					printf(pPlayer->m_cShape);
 				}
@@ -298,7 +292,6 @@ void RenderWorldMap(PPLAYER pPlayer)
 					printf("  ");
 				}
 			}
-			nTmp += 2;
 		}
 	}
 
@@ -327,9 +320,7 @@ void EventWindowRenewal()
 	MoveCursorTo(2, nHeight);
 	for (int i = 0; i < EVENT_WINDOW_WIDTH - 2; ++i)
 		printf("  ");
-	/*for (int i = 0; i < EVENT_STRING_MAXLENGTH; ++i) aEventMessage[i] = ' ';
-	printf(aEventMessage);
-	memset(aEventMessage, 0, sizeof(aEventMessage));*/
+
 
 	strcpy(aEventMessage, aEventTmpMessage);
 	memset(aEventTmpMessage, 0, sizeof(aEventTmpMessage));
@@ -343,7 +334,7 @@ void DrawECastle(PPLAYER pPlayer, PECASTLE pECastle)
 
 	if (g_sightMode)
 	{
-		int sightRange = 3;
+		int sightRange = DEFAULT_SIGHT + pPlayer->m_nScope;
 		nLeft = pPlayer->m_tPos.y - sightRange > 0 ? pPlayer->m_tPos.y - sightRange : 0;
 		nTop = pPlayer->m_tPos.x - sightRange > 0 ? pPlayer->m_tPos.x - sightRange : 0;
 		nRight = pPlayer->m_tPos.y + sightRange < CASTLE_WIDTH_MAX ? pPlayer->m_tPos.y + sightRange : CASTLE_WIDTH_MAX - 1;
@@ -383,7 +374,6 @@ void RenderBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	// Draw
 	for (int i = 0; i < MAP_HEIGHT_MAX; ++i)
 	{
-		int nTmp = 0;
 		int nForeColor = 0;
 		int nBackColor = 0;
 
@@ -404,7 +394,7 @@ void RenderBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 
 			if (aBackBuffer[i][j] != aFrontBuffer[i][j] || g_moveFlag)
 			{
-				MoveCursorTo(nTmp, i);
+				MoveCursorTo((j * 2), i);
 
 				// 플레이어 기사
 				if (!pPlayer->m_tSoldiers[SC_KNIGHT].m_nDie && 
@@ -479,7 +469,6 @@ void RenderBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 					printf("  ");
 				}
 			}
-			nTmp += 2;
 		}
 	}
 
@@ -504,42 +493,54 @@ void CreateStatusWindow()
 	// 이벤트 창 생성
 	for (int i = 0; i < EVENT_WINDOW_HEIGHT; ++i)
 	{
-		int nTmp = 0;
-
 		for (int j = 0; j < EVENT_WINDOW_WIDTH; ++j)
 		{
 			if (aEventWindow[i][j] == '1')
 			{
-				MoveCursorTo(nTmp, i + EVENT_WINDOW_HEIGHT_OFFSET);
+				MoveCursorTo((j * 2), i + EVENT_WINDOW_HEIGHT_OFFSET);
 				printf("※");
 			}
 			else
 			{
-				MoveCursorTo(nTmp, i + EVENT_WINDOW_HEIGHT_OFFSET);
+				MoveCursorTo((j * 2), i + EVENT_WINDOW_HEIGHT_OFFSET);
 				printf("  ");
 			}
-			nTmp += 2;
+		}
+	}
+
+	// 룰 창 생성
+	for (int i = 0; i < RULE_WINDOW_HEIGHT; ++i)
+	{
+		for (int j = 0; j < RULE_WINDOW_WIDTH; ++j)
+		{
+			if (aRuleWindow[i][j] == '1')
+			{
+				MoveCursorTo((j * 2), i + EVENT_WINDOW_HEIGHT_OFFSET + 5);
+				printf("※");
+			}
+			else
+			{
+				MoveCursorTo((j * 2), i + EVENT_WINDOW_HEIGHT_OFFSET + 5);
+				printf("  ");
+			}
 		}
 	}
 
 	// 스테이터스 창 생성
 	for (int i = 0; i < STATUS_WINDOW_HEIGHT; ++i)
 	{
-		int nTmp = 0;
-
 		for (int j = 0; j < STATUS_WINDOW_WIDTH; ++j)
 		{
 			if (aStatusWindow[i][j] == '1')
 			{
-				MoveCursorTo(nTmp + STATUS_WINDOW_WIDTH_OFFSET, i);
+				MoveCursorTo((j * 2) + STATUS_WINDOW_WIDTH_OFFSET, i);
 				printf("※");
 			}
 			else
 			{
-				MoveCursorTo(nTmp + STATUS_WINDOW_WIDTH_OFFSET, i);
+				MoveCursorTo((j * 2) + STATUS_WINDOW_WIDTH_OFFSET, i);
 				printf("  ");
 			}
-			nTmp += 2;
 		}
 	}
 }
@@ -551,21 +552,18 @@ void OnOffSubWindow(int nFlag)
 		// 서브 창 출력
 		for(int i = 0; i < SUBWINDOW_HEIGHT; ++i)
 		{
-			int nTmp = 0;
-
 			for (int j = 0; j < SUBWINDOW_WIDTH; ++j)
 			{
 				if (aSubWindow[i][j] == '1')
 				{
-					MoveCursorTo(nTmp + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
+					MoveCursorTo((j * 2) + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
 					printf("※");
 				}
 				else
 				{
-					MoveCursorTo(nTmp + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
+					MoveCursorTo((j * 2) + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
 					printf("  ");
 				}
-				nTmp += 2;
 			}
 		}
 	}
@@ -575,14 +573,11 @@ void OnOffSubWindow(int nFlag)
 		// 서브 창 지우기
 		for (int i = 0; i < SUBWINDOW_HEIGHT; ++i)
 		{
-			int nTmp = 0;
 
 			for (int j = 0; j < SUBWINDOW_WIDTH; ++j)
 			{
-				MoveCursorTo(nTmp + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
+				MoveCursorTo((j * 2) + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
 				printf("  ");
-
-				nTmp += 2;
 			}
 		}
 	}
@@ -594,14 +589,10 @@ void SubWindowRefresh()
 	// 서브 창 지우기
 	for (int i = 2; i < SUBWINDOW_HEIGHT - 2; ++i)
 	{
-		int nTmp = 2;
-
 		for (int j = 2; j < SUBWINDOW_WIDTH - 2; ++j)
 		{
-			MoveCursorTo(nTmp + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
+			MoveCursorTo((j * 2) + SUBWINDOW_WIDTH_OFFSET, SUBWINDOW_HEIGHT_OFFSET + i);
 			printf("  ");
-
-			nTmp += 2;
 		}
 	}
 }

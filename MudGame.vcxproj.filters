@@ -86,6 +86,12 @@
     <Text Include="BattleMap3.txt">
       <Filter>소스 파일\MapFile\02 BattleMap</Filter>
     </Text>
+    <Text Include="CastleStage3.txt">
+      <Filter>소스 파일\MapFile\01 Castle</Filter>
+    </Text>
+    <Text Include="CastleStage4.txt">
+      <Filter>소스 파일\MapFile\01 Castle</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c">

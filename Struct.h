@@ -52,6 +52,7 @@ typedef struct _tagItem
 
 	int m_nHpHeal;	// 체력 회복 정도
 	int m_nSoldierType;	// 대상
+	int m_nScopeRange;
 
 	int m_nCount; // 아이템 개수
 
@@ -62,8 +63,8 @@ typedef struct _tagItem
 
 typedef struct _tagInventory
 {
-	PITEM m_pBegin;
-	PITEM m_pEnd;
+	PITEM	m_pBegin;
+	PITEM	m_pEnd;
 	int		m_nSize;
 
 }INVENTORY, *PINVENTORY;
@@ -80,6 +81,9 @@ typedef struct _tagPlayer
 	int		m_nSelectSoldier; // 선택된 병사
 	int		m_nBattleMapMode;
 	int		m_nAreaCount; // 영역
+	int		m_nScope;	// 볼 수 있는 거리
+	int		m_nOccupiedCastle;
+	int		m_nClearGame;
 
 	MOUSE	m_tMouse;
 	int		m_nMouseOn;
@@ -88,7 +92,7 @@ typedef struct _tagPlayer
 	SOLDIER m_tSoldiers[3]; // 병사들
 
 	INVENTORY m_tInventory;
-	
+
 }PLAYER, *PPLAYER;
 
 

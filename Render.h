@@ -8,7 +8,7 @@ void MoveCursorTo(const int x, const int y);
 // 백버퍼에 그리기
 void DrawToBackBuffer(const int x, const int y, char image);
 // 월드맵 backbuffer 기록
-void DrawAll(PPLAYER pPlayer);
+void DrawWorld(PPLAYER pPlayer);
 // 월드맵 그리기
 void RenderWorldMap(PPLAYER pPlayer);
 // 적 성 backbuffer 기록

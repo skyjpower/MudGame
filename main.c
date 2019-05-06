@@ -68,6 +68,11 @@ int main()
 	// 한번 맵 렌더링 해주기
 	g_moveFlag = 1;
 
+	if (tPlayer.m_nClearGame)
+	{
+		g_sightMode = 0;
+	}
+
 	// PLAY
 	while (!g_gameOver)
 	{
@@ -77,10 +82,10 @@ int main()
 		// 월드맵
 		if (g_gameMode == MM_WORLDMAP)
 		{
-			DrawAll(&tPlayer);
+			DrawWorld(&tPlayer);
 
 			// Update
-			Update(&tPlayer, &pECastles, pBattleMaps);
+			Update(&tPlayer, pECastles, pBattleMaps);
 
 			// 그리기
 			RenderWorldMap(&tPlayer);

@@ -87,28 +87,18 @@ void Update(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 			pPlayer->m_nHaveShip = !pPlayer->m_nHaveShip;
 		}
 
-		// 아군 영역으로 만들기
-		if (GetAsyncKeyState('B') & 0x8000)
-		{
-			if (aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] == MWT_ECASTLEAREA)
-				aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] = MWT_PCASTLEAREA;
-			else if (aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] == MWT_PCASTLEAREA)
-				aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] = MWT_ECASTLEAREA;
-		}
-
 		// 시야각
 		if (GetAsyncKeyState('N') & 0x8000)
 		{
 			g_sightMode = !g_sightMode;
 			Sleep(100);
 		}
-
-		if (GetAsyncKeyState('L') & 0x8000)
-		{
-			g_gameOver = 1;
-		}
 	}
 
+	if (GetAsyncKeyState('Q') & 0x8000)
+	{
+		g_gameOver = 1;
+	}
 
 	// 적 성인 경우
 	if (aWorldMap[pPlayer->m_tWorldPos.x][pPlayer->m_tWorldPos.y] == MWT_ECASTLE)
@@ -209,6 +199,17 @@ void UpdateInCastle(PPLAYER pPlayer, PECASTLE pECastle)
 	if (pECastle->m_aECastleMap[nPlayerX][nPlayerY] == MCT_OBSTACLE)
 	{
 		nLoseFlag = 1;
+
+		// 문 제자리
+		PDOOR pDoor = pECastle->m_tDoorPosList->m_pBegin->m_pNext;
+		while (pDoor != pECastle->m_tDoorPosList->m_pEnd)
+		{
+			pECastle->m_aECastleMap[pDoor->m_tPos.x][pDoor->m_tPos.y] = MCT_DOOR;
+			pDoor = pDoor->m_pNext;
+		}
+
+		// 키 제자리
+		pECastle->m_aECastleMap[pECastle->m_tKeyPos.x][pECastle->m_tKeyPos.y] = MCT_KEY;
 	}
 	// 키 획득
 	else if (pECastle->m_aECastleMap[nPlayerX][nPlayerY] == MCT_KEY)
@@ -236,21 +237,45 @@ void UpdateInCastle(PPLAYER pPlayer, PECASTLE pECastle)
 		PAREA pArea = pECastle->m_tAreaPosList->m_pBegin->m_pNext;
 		while (pArea != pECastle->m_tAreaPosList->m_pEnd)
 		{
-			PAREA pNext = pArea->m_pNext;
+			pPlayer->m_nAreaCount++;
 			aWorldMap[pArea->m_tPos.x][pArea->m_tPos.y] = MWT_PCASTLEAREA;
-			free(pArea);
-			pArea = pNext;
+			pArea->m_beOccupied = ON;
+			pArea = pArea->m_pNext;
 		}
-		pECastle->m_tAreaPosList->m_pBegin->m_pNext = pECastle->m_tAreaPosList->m_pEnd;
-		pECastle->m_tAreaPosList->m_pEnd->m_pPrev = pECastle->m_tAreaPosList->m_pBegin;
-		pECastle->m_tAreaPosList->m_pBegin->m_pPrev = NULL;
-		pECastle->m_tAreaPosList->m_pEnd->m_pNext = NULL;
 
 		// 보상 획득
 		pPlayer->m_nMoney += pECastle->m_nReward;
-		pPlayer->m_nAreaCount++;
+		pPlayer->m_nOccupiedCastle++;
 		
-		EventWindowRenewal("공성전 클리어 !");
+		// 메세지
+		sprintf(aEventTmpMessage, "공성전 승리 !! 성을 점령하였습니다.");
+		EventWindowRenewal();
+		DelayTime(1.5f);
+		sprintf(aEventTmpMessage, "%d + %d ( 점령한 영토 수 ) 원 획득 !", pECastle->m_nReward, pPlayer->m_nAreaCount);
+		EventWindowRenewal();
+		DelayTime(1.5f);
+
+		// 성을 3개 점령한 경우
+		if (pPlayer->m_nOccupiedCastle == TOTAL_ECASTLE_NUM - 1)
+		{
+			sprintf(aEventTmpMessage, "점령한 성에서 배를 획득했습니다!");
+			EventWindowRenewal();
+			DelayTime(2.0f);
+
+			pPlayer->m_nHaveShip = ON;
+
+			sprintf(aEventTmpMessage, "이제 바다를 건너실 수 있습니다.");
+			EventWindowRenewal();
+			DelayTime(2.0f);
+		}
+		else if (pPlayer->m_nOccupiedCastle == TOTAL_ECASTLE_NUM)
+		{
+			sprintf(aEventTmpMessage, "축하합니다. 모든 성을 점령하셨습니다!");
+			EventWindowRenewal();
+			DelayTime(2.0f);
+		}
+
+		EventWindowRenewal();
 		// 월드맵으로 이동
 		ChangeCastleToWorld(pPlayer, CASTLE_WIN);
 		// 스테이터스 창 리프레쉬
@@ -303,12 +328,8 @@ void ChangeWorldToBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 {
 	g_gameMode = MM_BATTLEMAP;
 	memset(aBackBuffer, 0, sizeof(aBackBuffer));
-
-	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
-	{
-		pPlayer->m_tSoldiers[i].m_tPos.x = pBattleMap->m_tPlayerStartPos[i].x;
-		pPlayer->m_tSoldiers[i].m_tPos.y = pBattleMap->m_tPlayerStartPos[i].y;
-	}
+	memset(aBattleMapMoveFlag, 0, sizeof(aBattleMapMoveFlag));
+	InitBattleStage(pPlayer, pBattleMap);
 
 	g_moveFlag = 1;
 }
@@ -590,6 +611,10 @@ int AttackManager(PSOLDIER pAttacker, PSOLDIER pDefender)
 	// 방어자가 죽었는 지 확인하기
 	if (pDefender->m_nCurHp <= 0)
 	{
+		pDefender->m_nCurHp = 0;
+		pDefender->m_nDie = 1;
+		aBattleMapMoveFlag[pDefender->m_tPos.x][pDefender->m_tPos.y] = 0;
+
 		sprintf(aEventTmpMessage, "%s %s(이)가 사망하였습니다.",
 			DefenderTeam, pDefender->m_strName);
 		EventWindowRenewal();
@@ -610,7 +635,7 @@ void CalcDeltaTime()
 
 void DelayTime(float waitTime)
 {
-	float nWait = 0;
+	float nWait = 0.f;
 
 	while (nWait <= waitTime)
 	{
@@ -632,35 +657,174 @@ int CheckEndPlayerTurn(PPLAYER pPlayer)
 	return TRUE;
 }
 
+
+
+void EnemyMoveInBattleMap(PPLAYER pPlayer, PSOLDIER pSoldier, PBATTLEMAP pBattleMap)
+{
+	// 경로를 탐색할 배열
+	POINT posPath[MAP_HEIGHT_MAX][MAP_WIDTH_MAX] = { 0 };
+
+	// 경로 조사
+	int visit[MAP_HEIGHT_MAX][MAP_WIDTH_MAX] = { 0 };
+	POINT queue[QUEUE_MAX_SIZE];
+	int front = 0, rear = 1;
+
+	POINT curPos = { pSoldier->m_tPos.x, pSoldier->m_tPos.y };
+	queue[front] = curPos;
+	visit[curPos.x][curPos.y] = 1;
+
+	int nPath = 0;
+
+	while (front < rear)
+	{
+		int nFlag = OFF;
+		int qSize = rear - front;
+
+		for (int i = 0; i < qSize; ++i)
+		{
+			int cur_x = queue[front].x;
+			int cur_y = queue[front].y;
+			front++;
+
+			if (aBattleMapMoveFlag[cur_x][cur_y] == TT_PLAYER)
+			{
+				// 플레이어를 향해 이동
+				int tmp_x = cur_x, tmp_y = cur_y;
+
+				while (tmp_x != curPos.x || tmp_y != curPos.y)
+				{
+					tmp_x = posPath[cur_x][cur_y].x;
+					tmp_y = posPath[cur_x][cur_y].y;
+					--nPath;
+					
+					if ((nPath <= pSoldier->m_nAttackRange || nPath <= pSoldier->m_nMoveRange) && aBattleMapMoveFlag[tmp_x][tmp_y] == 0)
+					{
+
+						// 이동하기
+						aBattleMapMoveFlag[pSoldier->m_tPos.x][pSoldier->m_tPos.y] = 0;
+						pSoldier->m_tPos.x = tmp_x;
+						pSoldier->m_tPos.y = tmp_y;
+						aBattleMapMoveFlag[pSoldier->m_tPos.x][pSoldier->m_tPos.y] = TT_ENEMY;
+
+						return;
+
+					}
+					else if (nPath <= 0) return;
+
+					cur_x = tmp_x;
+					cur_y = tmp_y;
+				}
+				return;
+			}
+
+			for (int j = 0; j < 4; ++j)
+			{
+				int next_x = cur_x + xDir[j];
+				int next_y = cur_y + yDir[j];
+
+				if (visit[next_x][next_y]) continue;
+				if (pBattleMap->m_aBattleMap[next_x][next_y] != MBT_GROUND) continue;
+				
+				POINT tmp = { next_x, next_y };
+				visit[next_x][next_y] = 1;
+
+				posPath[next_x][next_y].x = cur_x;
+				posPath[next_x][next_y].y = cur_y;
+				
+				queue[rear++] = tmp;
+				nFlag = ON;
+			}
+		}
+		if(nFlag) nPath++;
+	}
+}
+
 void BattleMapEnemyAI(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 {
-	DelayTime(3.f);
+	int nTurn = 0;
+	for (int i = 0; i < pBattleMap->m_nEnemyCount; ++i)
+	{
+		// 죽은 유닛 무시
+		if (pBattleMap->m_tEnemy[i].m_nDie) continue;
+
+		// 공격 범위 확인
+		nTurn = CheckEnemyAroundSoldier(pPlayer, &pBattleMap->m_tEnemy[i], pBattleMap, TT_ENEMY);
+
+		if (nTurn) continue;
+		// 유닛 움직이기
+		EnemyMoveInBattleMap(pPlayer, &pBattleMap->m_tEnemy[i], pBattleMap);
+
+		g_moveFlag = 1;
+		DrawBattleMap(pPlayer, pBattleMap);
+		RenderBattleMap(pPlayer, pBattleMap);
+
+		DelayTime(1.5f);
+		// 공격 범위 확인
+		CheckEnemyAroundSoldier(pPlayer, &pBattleMap->m_tEnemy[i], pBattleMap, TT_ENEMY);
+	}
+	DelayTime(1.2f);
+	// 적 차례 끝
 	pBattleMap->m_nCurTurn = TT_PLAYER;
 
 	sprintf(aEventTmpMessage, "플레이어 차례 !");
 	EventWindowRenewal();
 }
 
-int CheckEnemyAroundPlayerSoldier(PSOLDIER pSoldier, PBATTLEMAP pBattleMap)
+int CheckEnemyAroundSoldier(PPLAYER pPlayer, PSOLDIER pSoldier, PBATTLEMAP pBattleMap, int nTeam)
 {
-	int cur_x = pSoldier->m_tPos.x;
-	int cur_y = pSoldier->m_tPos.y;
-	int range = pSoldier->m_nAttackRange;
-
-	int nLeft = (cur_y - range < 0) ? 0 : cur_y - range;
-	int nTop = (cur_x - range < 0) ? 0 : cur_x - range;
-	int nRight = (cur_y + range < MAP_HEIGHT_MAX) ? cur_y + range : MAP_HEIGHT_MAX - 1;
-	int nBottom = (cur_x + range < MAP_WIDTH_MAX) ? cur_x + range : MAP_WIDTH_MAX - 1;
-
-	for (int i = nTop; i <= nBottom; ++i)
+	if (nTeam == TT_PLAYER)
 	{
-		for (int j = nLeft; j <= nRight; ++j)
+		int cur_x = pSoldier->m_tPos.x;
+		int cur_y = pSoldier->m_tPos.y;
+		int range = pSoldier->m_nAttackRange;
+
+		int nLeft = (cur_y - range < 0) ? 0 : cur_y - range;
+		int nTop = (cur_x - range < 0) ? 0 : cur_x - range;
+		int nRight = (cur_y + range < MAP_HEIGHT_MAX) ? cur_y + range : MAP_HEIGHT_MAX - 1;
+		int nBottom = (cur_x + range < MAP_WIDTH_MAX) ? cur_x + range : MAP_WIDTH_MAX - 1;
+
+		for (int i = nTop; i <= nBottom; ++i)
 		{
-			if ((abs(cur_x - i) + abs(cur_y - j) <= range))
+			for (int j = nLeft; j <= nRight; ++j)
 			{
-				for (int k = 0; k < pBattleMap->m_nEnemyCount; ++k)
-					if (!pBattleMap->m_tEnemy[k].m_nDie && pBattleMap->m_tEnemy[k].m_tPos.x == i && pBattleMap->m_tEnemy[k].m_tPos.y == j)
+				if ((abs(cur_x - i) + abs(cur_y - j) <= range))
+				{
+					if(aBattleMapMoveFlag[i][j] == TT_ENEMY)
 						return TRUE;
+				}
+			}
+		}
+	}
+	else if (nTeam == TT_ENEMY)
+	{
+		int cur_x = pSoldier->m_tPos.x;
+		int cur_y = pSoldier->m_tPos.y;
+		int range = pSoldier->m_nAttackRange;
+
+		int nLeft = (cur_y - range < 0) ? 0 : cur_y - range;
+		int nTop = (cur_x - range < 0) ? 0 : cur_x - range;
+		int nRight = (cur_y + range < MAP_HEIGHT_MAX) ? cur_y + range : MAP_HEIGHT_MAX - 1;
+		int nBottom = (cur_x + range < MAP_WIDTH_MAX) ? cur_x + range : MAP_WIDTH_MAX - 1;
+
+		for (int i = nTop; i <= nBottom; ++i)
+		{
+			for (int j = nLeft; j <= nRight; ++j)
+			{
+				if ((abs(cur_x - i) + abs(cur_y - j) <= range))
+				{
+					for (int k = 0; k < TOTAL_SOLDIER_NUM; ++k)
+					{
+						if (!pPlayer->m_tSoldiers[k].m_nDie &&
+							pPlayer->m_tSoldiers[k].m_tPos.x == i && pPlayer->m_tSoldiers[k].m_tPos.y == j)
+						{
+							// 공격하기
+							AttackManager(pSoldier, &pPlayer->m_tSoldiers[k]);
+							StatusWindowRefresh(pPlayer);
+
+							return TRUE;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -721,42 +885,63 @@ void PlayerSoldierUpdate(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 			// 이동 확정
 			if (GetAsyncKeyState(VK_SPACE) & 0x8000)
 			{
-				if (pPlayer->m_tMouse.x !=pSeletSoldier->m_tPos.x ||
-					pPlayer->m_tMouse.y !=pSeletSoldier->m_tPos.y)
+				for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
 				{
-					for (int i = 0; i < pBattleMap->m_nEnemyCount; ++i)
+					// 해당 지점에 아군이 있는 경우
+					/*
+					if (pPlayer->m_tSoldiers[i].m_tPos.x == pPlayer->m_tMouse.x &&
+						pPlayer->m_tSoldiers[i].m_tPos.y == pPlayer->m_tMouse.y)
+						*/
+					if(aBattleMapMoveFlag[pPlayer->m_tMouse.x][pPlayer->m_tMouse.y] != 0)
 					{
-						// 해당 지점에 죽지 않은 적이 있는 경우
-						if (!pBattleMap->m_tEnemy[i].m_nDie && 
-							pBattleMap->m_tEnemy[i].m_tPos.x == pPlayer->m_tMouse.x &&
-							pBattleMap->m_tEnemy[i].m_tPos.y == pPlayer->m_tMouse.y)
-						{
-							sprintf(aEventTmpMessage, "해당 지점에 이동할 수 없습니다.");
-							EventWindowRenewal();
-							return;
-						}
+						sprintf(aEventTmpMessage, "해당 지점에 이동할 수 없습니다.");
+						EventWindowRenewal();
+						return;
 					}
-
-
-					pSeletSoldier->m_tPos.x = pPlayer->m_tMouse.x;
-					pSeletSoldier->m_tPos.y = pPlayer->m_tMouse.y;
-
-					// 움직임 턴을 사용함을 알림
-					pSeletSoldier->m_bMoveFlag = ON;
-
-					// 이동한 후 주변에 공격할 수 있는 대상이 없는 경우
-					if (!CheckEnemyAroundPlayerSoldier(pSeletSoldier, pBattleMap))
-					{
-						// 공격 플래그 ON
-						pSeletSoldier->m_bAttackFlag = ON;
-						// 턴 끝내기
-						pSeletSoldier->m_bTurn = OFF;
-					}
-
-					memset(aBattleMapRange, 0, sizeof(aBattleMapRange));
-					pPlayer->m_nMouseOn = OFF;
-					g_moveFlag = 1;
 				}
+
+				/*
+				// 이동하려는 지점에 적이 있는 지 확인
+				for (int i = 0; i < pBattleMap->m_nEnemyCount; ++i)
+				{
+					// 해당 지점에 죽지 않은 적이 있는 경우
+					if (!pBattleMap->m_tEnemy[i].m_nDie && 
+						pBattleMap->m_tEnemy[i].m_tPos.x == pPlayer->m_tMouse.x &&
+						pBattleMap->m_tEnemy[i].m_tPos.y == pPlayer->m_tMouse.y)
+					{
+						sprintf(aEventTmpMessage, "해당 지점에 이동할 수 없습니다.");
+						EventWindowRenewal();
+						return;
+					}
+				}
+				*/
+
+				// 현재 위치를 비었다고 판단
+				aBattleMapMoveFlag[pSeletSoldier->m_tPos.x][pSeletSoldier->m_tPos.y] = 0;
+
+				// 이동
+				pSeletSoldier->m_tPos.x = pPlayer->m_tMouse.x;
+				pSeletSoldier->m_tPos.y = pPlayer->m_tMouse.y;
+
+				// 이동한 위치의 팀을 표시
+				aBattleMapMoveFlag[pSeletSoldier->m_tPos.x][pSeletSoldier->m_tPos.y] = TT_PLAYER;
+
+				// 움직임 턴을 사용함을 알림
+				pSeletSoldier->m_bMoveFlag = ON;
+
+				// 이동한 후 주변에 공격할 수 있는 대상이 없는 경우
+				if (!CheckEnemyAroundSoldier(pPlayer, pSeletSoldier, pBattleMap, TT_PLAYER))
+				{
+					// 공격 플래그 ON
+					pSeletSoldier->m_bAttackFlag = ON;
+					// 턴 끝내기
+					pSeletSoldier->m_bTurn = OFF;
+				}
+
+				memset(aBattleMapRange, 0, sizeof(aBattleMapRange));
+				pPlayer->m_nMouseOn = OFF;
+				g_moveFlag = 1;
+			
 			}
 		}
 #pragma endregion
@@ -817,7 +1002,12 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	// 기사 선택
 	if (GetAsyncKeyState('1') & 0x8000 && pPlayer->m_nMouseOn != ON)
 	{
-		if (pPlayer->m_tSoldiers[SC_KNIGHT].m_bTurn)
+		if (pPlayer->m_tSoldiers[SC_KNIGHT].m_nDie)
+		{
+			sprintf(aEventTmpMessage, "죽은 병사입니다.");
+			EventWindowRenewal();
+		}
+		else if (pPlayer->m_tSoldiers[SC_KNIGHT].m_bTurn)
 		{
 			pPlayer->m_nSelectSoldier = SC_KNIGHT;
 
@@ -843,7 +1033,12 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	// 기병 선택
 	if (GetAsyncKeyState('2') & 0x8000 && pPlayer->m_nMouseOn != ON)
 	{
-		if (pPlayer->m_tSoldiers[SC_CAVALRY].m_bTurn)
+		if (pPlayer->m_tSoldiers[SC_CAVALRY].m_nDie)
+		{
+			sprintf(aEventTmpMessage, "죽은 병사입니다.");
+			EventWindowRenewal();
+		}
+		else if (pPlayer->m_tSoldiers[SC_CAVALRY].m_bTurn)
 		{
 			pPlayer->m_nSelectSoldier = SC_CAVALRY;
 			sprintf(aEventTmpMessage, "[플레이어] %s", pPlayer->m_tSoldiers[SC_CAVALRY].m_strName);
@@ -869,7 +1064,12 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	// 궁수 선택
 	if (GetAsyncKeyState('3') & 0x8000 && pPlayer->m_nMouseOn != ON)
 	{
-		if (pPlayer->m_tSoldiers[SC_ARCHER].m_bTurn)
+		if (pPlayer->m_tSoldiers[SC_ARCHER].m_nDie)
+		{
+			sprintf(aEventTmpMessage, "죽은 병사입니다.");
+			EventWindowRenewal();
+		}
+		else if (pPlayer->m_tSoldiers[SC_ARCHER].m_bTurn)
 		{
 			pPlayer->m_nSelectSoldier = SC_ARCHER;
 			sprintf(aEventTmpMessage, "[플레이어] %s", pPlayer->m_tSoldiers[SC_ARCHER].m_strName);
@@ -894,7 +1094,6 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 		}
 	}
 
-
 	// 캐릭터 선택
 	if ( pPlayer->m_nSelectSoldier >= SC_KNIGHT && 
 			pPlayer->m_nSelectSoldier < SC_END &&
@@ -914,7 +1113,7 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 		if (pPlayer->m_tSoldiers[i].m_bMoveFlag && !pPlayer->m_tSoldiers[i].m_bAttackFlag)
 		{
 			// 적이 없는 경우
-			if (!CheckEnemyAroundPlayerSoldier(&(pPlayer->m_tSoldiers[i]), pBattleMap))
+			if (!CheckEnemyAroundSoldier(pPlayer, &(pPlayer->m_tSoldiers[i]), pBattleMap, TT_PLAYER))
 				pPlayer->m_tSoldiers[i].m_bAttackFlag = ON;
 		}
 	}
@@ -947,8 +1146,6 @@ void UpdateInBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 		EventWindowRenewal();
 	}
 #pragma endregion
-
-	StatusWindowRefresh(pPlayer);
 }
 
 int CheckEndBattleGame(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
@@ -1005,6 +1202,37 @@ void CollectionTaxFromCastle(PPLAYER pPlayer)
 	}
 }
 */
+
+int CheckCanBuyItem(PPLAYER pPlayer, PITEM pItem)
+{
+	int nBuyItemFlag = ON;
+
+	switch (pItem->m_eItemType)
+	{
+	case IT_KNIGHT_HEAL:
+
+		break;
+	case IT_CAVALRY_HEAL:
+	
+		break;
+	case IT_ARCHER_HEAL:
+	
+		break;
+	case IT_ALL_HEAL:
+
+		break;
+	case IT_UPGRADE:
+
+		break;
+	case IT_TELESCOPE:
+
+		break;
+	default:
+		break;
+	}
+
+	return nBuyItemFlag;
+}
 
 void Shopping(PPLAYER pPlayer)
 {
@@ -1069,45 +1297,69 @@ void Shopping(PPLAYER pPlayer)
 			if (pPlayer->m_nMoney >= aShopItemsPrice[nSelectItem - 1])
 			{
 				int nHave = 0;
+
 				// 아이템 생성 및 인벤토리에 추가
 				PITEM pItem = CreateItem(nSelectItem);
 
-				PITEM search = pPlayer->m_tInventory.m_pBegin->m_pNext;
-				while (search != pPlayer->m_tInventory.m_pEnd)
+				// 구매 가능 여부 판정
+				if (!CheckCanBuyItem(pPlayer, pItem))
 				{
-					// 같은 종류의 아이템인 경우
-					if (search->m_eItemType == pItem->m_eItemType)
+					SAFE_DELETE(pItem)
+				}
+					
+				else
+				{
+					int nBuyFlag = OFF;
+
+					if (pItem->m_eItemType == IT_UPGRADE || pItem->m_eItemType == IT_TELESCOPE)
 					{
-						SAFE_DELETE(pItem)
-						search->m_nCount++;
-						nHave = 1;
-						break;
+						nBuyFlag = UseInventoryItem(pPlayer, pItem);
+						free(pItem);
+					}
+					else
+					{
+						PITEM search = pPlayer->m_tInventory.m_pBegin->m_pNext;
+						while (search != pPlayer->m_tInventory.m_pEnd)
+						{
+							// 같은 종류의 아이템인 경우
+							if (search->m_eItemType == pItem->m_eItemType)
+							{
+								SAFE_DELETE(pItem)
+									search->m_nCount++;
+								nHave = 1;
+								break;
+							}
+
+							search = search->m_pNext;
+						}
+
+						if (!nHave)
+						{
+							PITEM pPrev = pPlayer->m_tInventory.m_pEnd->m_pPrev;
+
+							pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
+							pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
+
+							pPrev->m_pNext = pItem;
+							pItem->m_pPrev = pPrev;
+
+							pPlayer->m_tInventory.m_nSize++;
+						}
+
+						nBuyFlag = ON;
+						sprintf(aEventTmpMessage, "%s 를 구매하셨습니다 !", aShopItems[nSelectItem - 1]);
+						EventWindowRenewal();
 					}
 
-					search = search->m_pNext;
+					if (nBuyFlag)
+					{
+						// 머니 감소
+						pPlayer->m_nMoney -= aShopItemsPrice[nSelectItem - 1];
+
+						DelayTime(2.0f);
+						StatusWindowRefresh(pPlayer);
+					}
 				}
-
-				if (!nHave)
-				{
-					PITEM pPrev = pPlayer->m_tInventory.m_pEnd->m_pPrev;
-
-					pItem->m_pNext = pPlayer->m_tInventory.m_pEnd;
-					pPlayer->m_tInventory.m_pEnd->m_pPrev = pItem;
-
-					pPrev->m_pNext = pItem;
-					pItem->m_pPrev = pPrev;
-
-					pPlayer->m_tInventory.m_nSize++;
-				}
-
-				// 머니 감소
-				pPlayer->m_nMoney -= aShopItemsPrice[nSelectItem - 1];
-
-				sprintf(aEventTmpMessage, "%s 를 구매하셨습니다 !", aShopItems[nSelectItem - 1]);
-				EventWindowRenewal();
-
-				DelayTime(2.0f);
-				StatusWindowRefresh(pPlayer);
 			}
 			else
 			{
@@ -1146,9 +1398,12 @@ PITEM CreateItem(int itemNum)
 	pItem->m_eItemType = itemNum;
 	pItem->m_nHpHeal = 100;
 	pItem->m_nSoldierType = itemNum - 1;
+	pItem->m_nScopeRange = 2;
 	pItem->m_nCount = 1;
 	pItem->m_pNext = NULL;
 	pItem->m_pPrev = NULL;
+
+	return pItem;
 }
 
 void InventoryList(PPLAYER pPlayer)
@@ -1220,31 +1475,35 @@ void ShowInventory(PPLAYER pPlayer)
 				for (int i = 1; i < nSelectItem; ++i)
 					pItem = pItem->m_pNext;
 
-				pItem->m_nCount--;
-				// 아이템이 이제 없는 경우
-				if (pItem->m_nCount <= 0)
+				if (UseInventoryItem(pPlayer, pItem))
 				{
-					PITEM pPrev = pItem->m_pPrev;
-					PITEM pNext = pItem->m_pNext;
+					pItem->m_nCount--;
 
-					pPrev->m_pNext = pNext;
-					pNext->m_pPrev = pPrev;
-					pPlayer->m_tInventory.m_nSize--;
+					// 아이템이 이제 없는 경우
+					if (pItem->m_nCount <= 0)
+					{
+						PITEM pPrev = pItem->m_pPrev;
+						PITEM pNext = pItem->m_pNext;
 
-					free(pItem);
+						pPrev->m_pNext = pNext;
+						pNext->m_pPrev = pPrev;
+						pPlayer->m_tInventory.m_nSize--;
 
-					// 첫번째 아이템으로 보내주기
-					nSelectItem = 1;
-					tMouse.x = nTop;
-					nBottom -= 2;
+						free(pItem);
+
+						// 첫번째 아이템으로 보내주기
+						nSelectItem = 1;
+						tMouse.x = nTop;
+						nBottom -= 2;
+					}
+
+					sprintf(aEventTmpMessage, "아이템을 사용하였습니다.");
+					EventWindowRenewal();
+
+					SubWindowRefresh();
+					InventoryList(pPlayer);
+					DelayTime(1.5f);
 				}
-
-				sprintf(aEventTmpMessage, "아이템을 사용하였습니다.");
-				EventWindowRenewal();
-
-				SubWindowRefresh();
-				InventoryList(pPlayer);
-				DelayTime(1.5f);
 			}
 			else
 			{
@@ -1271,6 +1530,135 @@ void ShowInventory(PPLAYER pPlayer)
 	}
 
 	OnOffSubWindow(OFF);
+	StatusWindowRefresh(pPlayer);
 	EventWindowRenewal();
 	DelayTime(1.0f);
+}
+
+// 아이템 적용해주기
+int UseInventoryItem(PPLAYER pPlayer, PITEM pItem)
+{
+	int nHealFlag = 0;
+	int nUseItemFlag = 0;
+	switch (pItem->m_eItemType)
+	{
+	case IT_KNIGHT_HEAL:
+		if (pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurHp < pPlayer->m_tSoldiers[SC_KNIGHT].m_nHp)
+		{
+			pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurHp =
+				(pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurHp + pItem->m_nHpHeal < pPlayer->m_tSoldiers[SC_KNIGHT].m_nHp) ?
+				pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurHp + pItem->m_nHpHeal : pPlayer->m_tSoldiers[SC_KNIGHT].m_nHp;
+
+			pPlayer->m_tSoldiers[SC_KNIGHT].m_nDie = 0;
+			sprintf(aEventTmpMessage, "%s의 체력 %d 회복 !", pPlayer->m_tSoldiers[SC_KNIGHT].m_strName, pItem->m_nHpHeal);
+			nUseItemFlag = ON;
+		}
+		else
+			sprintf(aEventTmpMessage, "체력이 가득 차 있습니다.");
+
+		break;
+	case IT_CAVALRY_HEAL:
+		if (pPlayer->m_tSoldiers[SC_CAVALRY].m_nCurHp < pPlayer->m_tSoldiers[SC_CAVALRY].m_nHp)
+		{
+			pPlayer->m_tSoldiers[SC_CAVALRY].m_nCurHp =
+				(pPlayer->m_tSoldiers[SC_CAVALRY].m_nCurHp + pItem->m_nHpHeal < pPlayer->m_tSoldiers[SC_CAVALRY].m_nHp) ?
+				pPlayer->m_tSoldiers[SC_CAVALRY].m_nCurHp + pItem->m_nHpHeal : pPlayer->m_tSoldiers[SC_CAVALRY].m_nHp;
+
+			pPlayer->m_tSoldiers[SC_CAVALRY].m_nDie = 0;
+			sprintf(aEventTmpMessage, "%s의 체력 %d 회복 !", pPlayer->m_tSoldiers[SC_KNIGHT].m_strName, pItem->m_nHpHeal);
+			nUseItemFlag = ON;
+		}
+		else
+			sprintf(aEventTmpMessage, "체력이 가득 차 있습니다.");
+		break;
+	case IT_ARCHER_HEAL:
+		if (pPlayer->m_tSoldiers[SC_ARCHER].m_nCurHp < pPlayer->m_tSoldiers[SC_ARCHER].m_nHp)
+		{
+			pPlayer->m_tSoldiers[SC_ARCHER].m_nCurHp =
+				(pPlayer->m_tSoldiers[SC_ARCHER].m_nCurHp + pItem->m_nHpHeal < pPlayer->m_tSoldiers[SC_ARCHER].m_nHp) ?
+				pPlayer->m_tSoldiers[SC_ARCHER].m_nCurHp + pItem->m_nHpHeal : pPlayer->m_tSoldiers[SC_ARCHER].m_nHp;
+
+			pPlayer->m_tSoldiers[SC_ARCHER].m_nDie = 0;
+			sprintf(aEventTmpMessage, "%s의 체력 %d 회복 !", pPlayer->m_tSoldiers[SC_KNIGHT].m_strName, pItem->m_nHpHeal);
+			nUseItemFlag = ON;
+		}
+		else
+			sprintf(aEventTmpMessage, "체력이 가득 차 있습니다.");
+		break;
+	case IT_ALL_HEAL:
+		for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
+		{
+			if (pPlayer->m_tSoldiers[i].m_nCurHp < pPlayer->m_tSoldiers[i].m_nHp)
+			{
+				nHealFlag = ON;
+				break;
+			}
+		}
+		if (nHealFlag)
+		{
+			pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurHp =
+				(pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurHp + pItem->m_nHpHeal < pPlayer->m_tSoldiers[SC_KNIGHT].m_nHp) ?
+				pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurHp + pItem->m_nHpHeal : pPlayer->m_tSoldiers[SC_KNIGHT].m_nHp;
+
+			pPlayer->m_tSoldiers[SC_KNIGHT].m_nDie = 0;
+			pPlayer->m_tSoldiers[SC_CAVALRY].m_nCurHp =
+				(pPlayer->m_tSoldiers[SC_CAVALRY].m_nCurHp + pItem->m_nHpHeal < pPlayer->m_tSoldiers[SC_CAVALRY].m_nHp) ?
+				pPlayer->m_tSoldiers[SC_CAVALRY].m_nCurHp + pItem->m_nHpHeal : pPlayer->m_tSoldiers[SC_CAVALRY].m_nHp;
+
+			pPlayer->m_tSoldiers[SC_CAVALRY].m_nDie = 0;
+			pPlayer->m_tSoldiers[SC_ARCHER].m_nCurHp =
+				(pPlayer->m_tSoldiers[SC_ARCHER].m_nCurHp + pItem->m_nHpHeal < pPlayer->m_tSoldiers[SC_ARCHER].m_nHp) ?
+				pPlayer->m_tSoldiers[SC_ARCHER].m_nCurHp + pItem->m_nHpHeal : pPlayer->m_tSoldiers[SC_ARCHER].m_nHp;
+
+			pPlayer->m_tSoldiers[SC_ARCHER].m_nDie = 0;
+			sprintf(aEventTmpMessage, "모든 병사 체력 100 회복");
+			nUseItemFlag = ON;
+		}
+		else
+			sprintf(aEventTmpMessage, "체력이 모두 가득 차 있습니다.");
+
+		break;
+	case IT_UPGRADE:
+		if (pPlayer->m_tSoldiers[SC_KNIGHT].m_nCurUpgrade >= (pPlayer->m_tSoldiers[SC_KNIGHT].m_nUpgradeMax - 1))
+			sprintf(aEventTmpMessage, "최대 업그레이드 상태입니다.");
+		else
+		{
+			for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
+				pPlayer->m_tSoldiers[i].m_nCurUpgrade += 1;
+
+			UpgradeSoldiers(pPlayer);
+			sprintf(aEventTmpMessage, "업그레이드 완료 !");
+ 			StatusWindowRefresh(pPlayer);
+			nUseItemFlag = ON;
+		}
+		break;
+	case IT_TELESCOPE:
+		if (pPlayer->m_nScope == 0)
+		{
+			pPlayer->m_nScope += pItem->m_nScopeRange;
+			nUseItemFlag = ON;
+			sprintf(aEventTmpMessage, "시야가 넓어졌습니다.");
+			g_moveFlag = 1;
+		}
+		else
+		{
+			sprintf(aEventTmpMessage, "한 번만 구매가 가능한 아이템입니다.");
+		}
+		
+		break;
+	default:
+		break;
+	}
+
+	StatusWindowRefresh(pPlayer);
+	EventWindowRenewal();
+	DelayTime(1.5f);
+
+	return nUseItemFlag;
+}
+
+void UpgradeSoldiers(PPLAYER pPlayer)
+{
+	for (int i = 0; i < TOTAL_SOLDIER_NUM; ++i)
+		pPlayer->m_tSoldiers[i] = CreateSoldier(i, TT_PLAYER, pPlayer->m_tSoldiers[i].m_nCurUpgrade);
 }

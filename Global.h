@@ -3,6 +3,7 @@
 
 extern char aWorldMap[MAP_WIDTH_MAX][MAP_HEIGHT_MAX];
 extern int aBattleMapRange[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
+extern int aBattleMapMoveFlag[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
 
 extern char aFrontBuffer[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
 extern char aBackBuffer[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
@@ -15,9 +16,11 @@ extern char aEventTmpMessage[EVENT_STRING_MAXLENGTH];
 extern char aStatusWindow[STATUS_WINDOW_HEIGHT][STATUS_WINDOW_WIDTH];
 extern char aSubWindow[SUBWINDOW_HEIGHT][SUBWINDOW_WIDTH];
 
+extern char aRuleWindow[RULE_WINDOW_HEIGHT][RULE_WINDOW_WIDTH];
+
 extern POINT tStartPos;
 
-extern const char* FileName[3];
+extern const char* FileName[TOTAL_ECASTLE_NUM];
 extern const char* BattleMapFileName[3];
 
 extern int g_moveFlag;
@@ -33,7 +36,7 @@ extern int LevelStatusTable[3][3][7];
 extern int LevelCharacterUpgradeCost[3][3];
 
 extern int aMapTileColor[2][7];
-extern int aCastleTileColor[2][6];
+extern int aCastleTileColor[2][7];
 extern int aBattleTileColor[2][10];
 
 extern int xDir[8];

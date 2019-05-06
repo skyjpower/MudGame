@@ -40,7 +40,7 @@ void CalcSoldierRange(PPLAYER pPlayer, PSOLDIER pSoldier, PBATTLEMAP pBattleMap)
 // 플레이어 병사 움직임
 void PlayerSoldierUpdate(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
 // 플레이어 병사 주변에 적이 있는 지 확인
-int CheckEnemyAroundPlayerSoldier(PSOLDIER pSoldier, PBATTLEMAP pBattleMap);
+int CheckEnemyAroundSoldier(PPLAYER pPlayer, PSOLDIER pSoldier, PBATTLEMAP pBattleMap, int nTeam);
 // 병사 조정 커서 위치
 void SetMousePos(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
 // 공격 판정
@@ -49,6 +49,9 @@ int AttackManager(PSOLDIER pAttacker, PSOLDIER pDefender);
 int CheckEndPlayerTurn(PPLAYER pPlayer);
 // 적 AI
 void BattleMapEnemyAI(PPLAYER pPlayer, PBATTLEMAP pBattleMap);
+// 적 AI 움직이기
+void EnemyMoveInBattleMap(PPLAYER pPlayer, PSOLDIER pSoldier, PBATTLEMAP pBattleMap);
+
 
 
 /* 시간 계산 */
@@ -66,3 +69,9 @@ void Shopping(PPLAYER pPlayer);
 PITEM CreateItem(int itemNum);
 // 인벤토리 창
 void ShowInventory(PPLAYER pPlayer);
+// 아이템 사용 적용
+int UseInventoryItem(PPLAYER pPlayer, PITEM pItem);
+// 아이템 구매 가능 확인
+int CheckCanBuyItem(PPLAYER pPlayer, PITEM pItem);
+// 병사 업그레이드
+void UpgradeSoldiers(PPLAYER pPlayer);
