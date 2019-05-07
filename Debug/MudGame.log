@@ -1,2 +1,9 @@
-﻿  Update.c
-  MudGame.vcxproj -> C:\Users\user\Desktop\Projects\MudGame\Debug\MudGame.exe
+﻿  main.c
+  Update.c
+  Render.c
+  Init.c
+  Global.c
+  Debugging.c
+  코드를 생성하고 있습니다...
+  MudGame.vcxproj -> C:\Users\hrd-321-16\Documents\Visual Studio 2015\Projects\MudGame\Debug\MudGame.exe
+  MudGame.vcxproj -> C:\Users\hrd-321-16\Documents\Visual Studio 2015\Projects\MudGame\Debug\MudGame.pdb (Full PDB)

@@ -10,7 +10,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	for (int i = 0; i < TOTAL_ECASTLE_NUM; ++i)
 	{
 		ppECastle[i] = (PECASTLE)malloc(sizeof(ECASTLE));
-		ppECastle[i]->m_nReward = 0;
+		ppECastle[i]->m_nReward = 5000;
 		ppECastle[i]->m_tStartPos.x = 0;
 		ppECastle[i]->m_tStartPos.y = 0;
 		ppECastle[i]->m_tDestPos.x = 0;
@@ -44,7 +44,7 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 	pPlayer->m_tPos.x = 0;
 	pPlayer->m_tPos.y = 0;
 	pPlayer->m_nHaveShip = 0;
-	pPlayer->m_nMoney = 999999999;
+	pPlayer->m_nMoney = 1000;
 	pPlayer->m_nColor = YELLOW;
 	pPlayer->m_nSelectSoldier = -1; // 아무것도 선택 안한 상태
 	pPlayer->m_nMouseOn = OFF;
@@ -97,8 +97,8 @@ int Init(PPLAYER pPlayer, PECASTLE* ppECastle, PBATTLEMAP* ppBattleMaps)
 			ppBattleMaps[i]->m_tPlayerStartPos[j].x = 0;
 			ppBattleMaps[i]->m_tPlayerStartPos[j].y = 0;
 			ppBattleMaps[i]->m_nEnemyCount = 0;
-			ppBattleMaps[i]->m_nRewardMin = 100;
-			ppBattleMaps[i]->m_nRewardMax = 300;
+			ppBattleMaps[i]->m_nRewardMin = 10;
+			ppBattleMaps[i]->m_nRewardMax = 25;
 			ppBattleMaps[i]->m_nCurTurn = TT_PLAYER;
 		}
 		LoadBattleMap(ppBattleMaps[i], i);
@@ -537,6 +537,8 @@ void SavePlayer(PPLAYER pPlayer)
 		return;
 	}
 
+	// 시야 모드
+	fwrite(&g_sightMode, sizeof(int), 1, fp);
 	// 시작 위치
 	fwrite(&tStartPos, sizeof(POINT), 1, fp);
 	// 플레이어 캐슬맵 위치
@@ -692,6 +694,24 @@ void SaveBattleMaps(PBATTLEMAP * ppBattleMaps)
 	fclose(fp);
 }
 
+int LoadMain()
+{
+	FILE* fp = NULL;
+	fp = fopen("Main.txt", "rt");
+	if (fp == NULL)
+	{
+		puts("메인 파일 오픈 실패");
+		return FALSE;
+	}
+	fseek(fp, 0, SEEK_END);
+	int nSize = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+	pMainText = (char*)calloc(1, sizeof(char) * (nSize + 1));
+	fread(pMainText, sizeof(char) * nSize, 1, fp);
+
+	return TRUE;
+}
+
 int LoadPlayer(PPLAYER pPlayer)
 {
 	FILE* fp = NULL;
@@ -702,6 +722,8 @@ int LoadPlayer(PPLAYER pPlayer)
 		puts("ERROR) 세이브 파일 오픈 실패");
 		return FALSE;
 	}
+	// 시야 모드
+	fread(&g_sightMode, sizeof(int), 1, fp);
 	// 시작 위치
 	fread(&tStartPos, sizeof(POINT), 1, fp);
 	// 플레이어 캐슬맵 위치
@@ -923,18 +945,26 @@ void ConsoleInit()
 
 int MainMenuScene()
 {
+	if (!LoadMain())
+	{
+		return FALSE;
+	}
+
 	int nMenu = MT_NEW;
-	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT);
+	MoveCursorTo(0, MAINMENU_HEIGHT - 3);
+	printf("%s", pMainText);
+
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 5);
 	printf("1. 새로하기\n");
-	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 2);
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 7);
 	printf("2. 이어하기\n");
-	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 4);
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 9);
 	printf("3. 종료\n");
-	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 8);
+	MoveCursorTo(MAINMENU_WIDTH, MAINMENU_HEIGHT + 11);
 	printf("원하시는 메뉴를 선택한 후 SPACE를 누르세요...");
-	
+
 	MOUSE mouse;
-	mouse.x = MAINMENU_HEIGHT;
+	mouse.x = MAINMENU_HEIGHT + 5;
 	mouse.y = MAINMENU_WIDTH - 4;
 	MoveCursorTo(mouse.y, mouse.x);
 
@@ -968,9 +998,9 @@ int MainMenuScene()
 		// Refresh
 		for (int i = 0; i < MT_EXIT; ++i)
 		{
-			if (mouse.x != MAINMENU_HEIGHT + (i * 2) || mouse.y != MAINMENU_WIDTH - 4)
+			if (mouse.x != MAINMENU_HEIGHT + 5 + (i * 2) || mouse.y != MAINMENU_WIDTH - 4)
 			{
-				MoveCursorTo(MAINMENU_WIDTH - 4, MAINMENU_HEIGHT + (i * 2));
+				MoveCursorTo(MAINMENU_WIDTH - 4, MAINMENU_HEIGHT + 5 + (i * 2));
 				printf("  ");
 			}
 		}

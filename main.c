@@ -73,6 +73,7 @@ int main()
 		g_sightMode = 0;
 	}
 
+	RuleWindowRefresh();
 	// PLAY
 	while (!g_gameOver)
 	{
@@ -128,6 +129,8 @@ int main()
 		}
 	}
 	
+
+	// ºº¿Ã∫Í
 	SavePlayer(&tPlayer);
 	SaveWorldMap();
 	SaveECastleMap(pECastles);
@@ -177,6 +180,7 @@ int main()
 	}
 	SAFE_DELETE(tPlayer.m_tInventory.m_pBegin)
 	SAFE_DELETE(tPlayer.m_tInventory.m_pEnd)
+	SAFE_DELETE(pMainText)
 #pragma endregion
 
 	_CrtDumpMemoryLeaks();

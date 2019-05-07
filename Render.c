@@ -596,3 +596,44 @@ void SubWindowRefresh()
 		}
 	}
 }
+
+void RuleWindowRefresh()
+{
+	int nHeight = MAP_HEIGHT_MAX + EVENT_WINDOW_HEIGHT + 2;
+	int nWidth = 4;
+
+	for (int i = 0; i < RULE_WINDOW_HEIGHT - 3; ++i)
+	{
+		MoveCursorTo(nWidth, nHeight + i);
+		printf("                                                       ");
+	}
+	
+	switch (g_gameMode)
+	{
+	case MM_WORLDMAP:
+		MoveCursorTo(nWidth, nHeight);
+		printf("Move : 화살표키");
+		MoveCursorTo(nWidth, nHeight + 2);
+		printf("Inventory : i 키");
+		MoveCursorTo(nWidth, nHeight + 4);
+		printf("Shop : s 키 ( 성에 있을 때만 가능 )");
+		break;
+	case MM_CASTLEMAP:
+		MoveCursorTo(nWidth, nHeight);
+		printf("Move : 화살표 키");
+		MoveCursorTo(nWidth, nHeight + 2);
+		printf("목적지에 다다르면 승리합니다.");
+		MoveCursorTo(nWidth, nHeight + 4);
+		printf("빨강색은 장애물이니 피해주세요.");
+		break;
+	case MM_BATTLEMAP:
+		MoveCursorTo(nWidth, nHeight);
+		printf("컨트롤하고자 하는 병사의 번호를 입력하세요(1~3)");
+		MoveCursorTo(nWidth, nHeight + 2);
+		printf("Move : Space 키,  Attack : A 키");
+		MoveCursorTo(nWidth, nHeight + 4);
+		break;
+	default:
+		break;
+	}
+}

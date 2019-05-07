@@ -13,9 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="소스 파일\MapFile">
-      <UniqueIdentifier>{986425a1-62a9-40a1-bb09-b1c5e9a1d0b7}</UniqueIdentifier>
-    </Filter>
     <Filter Include="소스 파일\01 Init">
       <UniqueIdentifier>{bb12538d-45f0-4034-b060-7453839984cc}</UniqueIdentifier>
     </Filter>
@@ -31,11 +28,17 @@
     <Filter Include="소스 파일\05 Debug">
       <UniqueIdentifier>{c85e574c-445f-4a14-b7cd-385d0aa484e1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\MapFile\01 Castle">
+    <Filter Include="소스 파일\TextFile">
+      <UniqueIdentifier>{986425a1-62a9-40a1-bb09-b1c5e9a1d0b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\TextFile\01 Castle">
       <UniqueIdentifier>{20f7d581-d9e7-4806-9bdc-f5afef938ddd}</UniqueIdentifier>
     </Filter>
-    <Filter Include="소스 파일\MapFile\02 BattleMap">
+    <Filter Include="소스 파일\TextFile\02 BattleMap">
       <UniqueIdentifier>{60ab8b10-7c39-444c-8fe6-477bbef3f7d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="소스 파일\TextFile\03 Main">
+      <UniqueIdentifier>{b1f314e9-1ac8-4ee2-a27c-1d50559f76dc}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -69,28 +72,31 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="NationWide.txt">
-      <Filter>소스 파일\MapFile</Filter>
+      <Filter>소스 파일\TextFile</Filter>
     </Text>
     <Text Include="CastleStage1.txt">
-      <Filter>소스 파일\MapFile\01 Castle</Filter>
+      <Filter>소스 파일\TextFile\01 Castle</Filter>
     </Text>
     <Text Include="CastleStage2.txt">
-      <Filter>소스 파일\MapFile\01 Castle</Filter>
+      <Filter>소스 파일\TextFile\01 Castle</Filter>
     </Text>
     <Text Include="BattleMap1.txt">
-      <Filter>소스 파일\MapFile\02 BattleMap</Filter>
+      <Filter>소스 파일\TextFile\02 BattleMap</Filter>
     </Text>
     <Text Include="BattleMap2.txt">
-      <Filter>소스 파일\MapFile\02 BattleMap</Filter>
+      <Filter>소스 파일\TextFile\02 BattleMap</Filter>
     </Text>
     <Text Include="BattleMap3.txt">
-      <Filter>소스 파일\MapFile\02 BattleMap</Filter>
+      <Filter>소스 파일\TextFile\02 BattleMap</Filter>
     </Text>
     <Text Include="CastleStage3.txt">
-      <Filter>소스 파일\MapFile\01 Castle</Filter>
+      <Filter>소스 파일\TextFile\01 Castle</Filter>
     </Text>
     <Text Include="CastleStage4.txt">
-      <Filter>소스 파일\MapFile\01 Castle</Filter>
+      <Filter>소스 파일\TextFile\01 Castle</Filter>
+    </Text>
+    <Text Include="Main.txt">
+      <Filter>소스 파일\TextFile\03 Main</Filter>
     </Text>
   </ItemGroup>
   <ItemGroup>

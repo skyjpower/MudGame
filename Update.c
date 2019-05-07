@@ -271,6 +271,7 @@ void UpdateInCastle(PPLAYER pPlayer, PECASTLE pECastle)
 		else if (pPlayer->m_nOccupiedCastle == TOTAL_ECASTLE_NUM)
 		{
 			sprintf(aEventTmpMessage, "축하합니다. 모든 성을 점령하셨습니다!");
+			g_sightMode = OFF;
 			EventWindowRenewal();
 			DelayTime(2.0f);
 		}
@@ -314,6 +315,7 @@ void ChangeWorldToCastle(PPLAYER pPlayer, PECASTLE pECastle)
 	g_gameMode = MM_CASTLEMAP;
 	memset(aBackBuffer, 0, sizeof(aBackBuffer));
 
+	RuleWindowRefresh();
 	g_moveFlag = 1;
 }
 
@@ -321,6 +323,8 @@ void ChangeCastleToWorld(PPLAYER pPlayer, int nWin)
 {
 	g_gameMode = MM_WORLDMAP;
 	memset(aBackBuffer, 0, sizeof(aBackBuffer));
+	RuleWindowRefresh();
+
 	g_moveFlag = 1;
 }
 
@@ -330,6 +334,7 @@ void ChangeWorldToBattleMap(PPLAYER pPlayer, PBATTLEMAP pBattleMap)
 	memset(aBackBuffer, 0, sizeof(aBackBuffer));
 	memset(aBattleMapMoveFlag, 0, sizeof(aBattleMapMoveFlag));
 	InitBattleStage(pPlayer, pBattleMap);
+	RuleWindowRefresh();
 
 	g_moveFlag = 1;
 }
@@ -374,7 +379,6 @@ void ChangeBattleMapToWorld(PPLAYER pPlayer, PBATTLEMAP pBattleMap, int nWinTeam
 					aWorldMap[next_x][next_y] = MWT_PCASTLEAREA;
 			}
 
-
 		}
 		else if (nAliveSoldierNum >= 2)
 		{
@@ -401,9 +405,9 @@ void ChangeBattleMapToWorld(PPLAYER pPlayer, PBATTLEMAP pBattleMap, int nWinTeam
 		DelayTime(1.f);
 		// 보상
 		int nReward = (rand() % (pBattleMap->m_nRewardMax - pBattleMap->m_nRewardMin)) + pBattleMap->m_nRewardMin;
-		pPlayer->m_nMoney += nReward;
+		pPlayer->m_nMoney += (nReward * pPlayer->m_nAreaCount);
 		// 보상 메세지
-		sprintf(aEventTmpMessage, "%d 원을 획득하였습니다.", nReward);
+		sprintf(aEventTmpMessage, "%d x %d = %d ( 점령한 영토 수 ) 원 획득 !", nReward, pPlayer->m_nAreaCount, nReward * pPlayer->m_nAreaCount);
 		EventWindowRenewal();
 		DelayTime(1.f);
 	}
@@ -426,6 +430,8 @@ void ChangeBattleMapToWorld(PPLAYER pPlayer, PBATTLEMAP pBattleMap, int nWinTeam
 	g_gameMode = MM_WORLDMAP;
 	memset(aBackBuffer, 0, sizeof(aBackBuffer));	
 	g_moveFlag = 1;
+
+	RuleWindowRefresh();
 	StatusWindowRefresh(pPlayer);
 	EventWindowRenewal();
 }

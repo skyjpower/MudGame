@@ -31,3 +31,5 @@ void StatusWindowRefresh(PPLAYER pPlayer);
 void OnOffSubWindow(int nFlag);
 // 서브 창 리프레쉬
 void SubWindowRefresh();
+// 룰 창 그리기
+void RuleWindowRefresh();

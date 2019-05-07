@@ -29,6 +29,7 @@ void SaveBattleMaps(PBATTLEMAP* ppBattleMaps);
 
 
 // Load
+int LoadMain();
 int LoadPlayer(PPLAYER pPlayer);
 int LoadWorld();
 int LoadECastles(PECASTLE* ppECastleMaps);
@@ -39,3 +40,4 @@ int LoadBattleMaps(PBATTLEMAP* ppBattleMaps);
 void ConsoleInit();
 // 메인 화면
 int MainMenuScene();
+int LoadMain();

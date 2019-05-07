@@ -1,6 +1,8 @@
 #pragma once
 #include "Game.h"
 
+extern char* pMainText;
+
 extern char aWorldMap[MAP_WIDTH_MAX][MAP_HEIGHT_MAX];
 extern int aBattleMapRange[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];
 extern int aBattleMapMoveFlag[MAP_HEIGHT_MAX][MAP_WIDTH_MAX];

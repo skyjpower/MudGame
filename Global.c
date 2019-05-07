@@ -1,5 +1,8 @@
 #include "Global.h"
 
+// 메인 메뉴
+char* pMainText = NULL;
+
 // 맵
 char aWorldMap[MAP_WIDTH_MAX][MAP_HEIGHT_MAX] = { 0 };
 // 배틀 맵 캐릭터 움직임 범위 표시
